@@ -60,6 +60,13 @@ export interface RoleDefinition {
 export interface NightStep {
   roleId: string;
   actingPlayerIds: string[];
+  /**
+   * True when every player who ever held this role is now dead. The
+   * moderator still "calls" the role in sequence — same as a real game,
+   * where skipping a dead role's turn would let players deduce who died
+   * just from which roles get called each night.
+   */
+  allHoldersDead?: boolean;
 }
 
 export interface DeathRecord {

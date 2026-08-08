@@ -20,6 +20,31 @@ export function NightScreen({
 
   const role = getRole(step.roleId);
 
+  if (step.allHoldersDead) {
+    return (
+      <div key={stepKey}>
+        <div className="top-bar">
+          <h1>🌙 Đêm <span className="round-num">{state.round}</span></h1>
+          <span className="role-badge role-badge-center">
+            <span className="role-badge-icon">{role.icon}</span>
+            <span className="role-badge-name">{role.name}</span>
+          </span>
+        </div>
+
+        <div className="card">
+          <h2>{role.name}</h2>
+          <p className="muted">
+            Gọi {role.name} thức dậy / mở mắt như bình thường, rồi cho ngủ lại ngay (không còn ai giữ vai này).
+          </p>
+        </div>
+
+        <button type="button" className="btn btn-primary" onClick={() => onSubmit(null)}>
+          Tiếp Tục
+        </button>
+      </div>
+    );
+  }
+
   if (needsIdentification(state)) {
     const expected = state.roleComposition[step.roleId] ?? 0;
     const candidates = state.players.filter((p) => p.alive && !p.roleId);

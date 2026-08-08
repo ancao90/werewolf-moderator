@@ -17,20 +17,26 @@ function livingPlayers(players: Player[]): Player[] {
   return players.filter((p) => p.alive);
 }
 
-/** Builds this round's ordered night steps from whichever roles have living holders. */
-function computeNightSteps(players: Player[]): NightStep[] {
+/**
+ * Builds this round's ordered night steps from every acting role that was
+ * ever dealt into the game — not just roles with living holders. A role
+ * whose holders have all died still gets called in sequence (with no one
+ * to actually act), so players can't infer who died from which roles the
+ * moderator skips calling.
+ */
+function computeNightSteps(players: Player[], roleComposition: Record<string, number>): NightStep[] {
   const alive = livingPlayers(players);
-  const roleIdsPresent = Array.from(new Set(alive.map((p) => p.roleId)));
 
-  const steps = roleIdsPresent
-    .map((roleId) => getRole(roleId))
+  const steps = Object.entries(roleComposition)
+    .filter(([, count]) => count > 0)
+    .map(([roleId]) => getRole(roleId))
     .filter((role) => role.nightOrder !== null)
     .sort((a, b) => (a.nightOrder as number) - (b.nightOrder as number))
     .map((role): NightStep => {
       const actingPlayerIds = alive
         .filter((p) => p.roleId === role.id)
         .map((p) => p.id);
-      return { roleId: role.id, actingPlayerIds };
+      return { roleId: role.id, actingPlayerIds, allHoldersDead: actingPlayerIds.length === 0 };
     });
 
   return steps;
@@ -117,7 +123,7 @@ export function getCurrentNightStep(state: GameState): NightStep | null {
 /** True while the current step's role hasn't been identified yet (round 1 only). */
 export function needsIdentification(state: GameState): boolean {
   const step = getCurrentNightStep(state);
-  return step !== null && step.actingPlayerIds.length === 0;
+  return step !== null && step.actingPlayerIds.length === 0 && !step.allHoldersDead;
 }
 
 /**
@@ -286,7 +292,7 @@ export function startNextNight(state: GameState): GameState {
     ...state,
     phase: 'night',
     round: nextRound,
-    pendingNightSteps: computeNightSteps(state.players),
+    pendingNightSteps: computeNightSteps(state.players, state.roleComposition),
     log: [...state.log, `Round ${nextRound} begins. Night falls on the village.`],
   };
 }
