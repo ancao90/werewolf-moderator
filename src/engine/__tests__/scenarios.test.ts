@@ -518,6 +518,66 @@ describe('hunter', () => {
   });
 });
 
+// 1 werewolf, 1 tanner, vs. 2 plain villagers.
+function setupWithTanner(): GameState {
+  return createGame(
+    [
+      { id: 'p1', name: 'Alice' },
+      { id: 'p2', name: 'Bob' },
+      { id: 'p3', name: 'Carol' },
+      { id: 'p4', name: 'Dave' },
+    ],
+    { werewolf: 1, tanner: 1, villager: 2 },
+  );
+}
+
+describe('tanner', () => {
+  it('has to be called on round 1 so the moderator identifies its holder, like any other role', () => {
+    const state = setupWithTanner();
+    const roleIds = state.pendingNightSteps.map((s) => s.roleId);
+    expect(roleIds).toEqual(['werewolf', 'tanner']);
+  });
+
+  it('wins outright when voted out, regardless of villagers/werewolves parity', () => {
+    const state = setupWithTanner();
+    const afterNight = runNight(state, [
+      { identify: ['p1'], target: null }, // werewolf
+      { identify: ['p2'], target: null }, // tanner — nothing to do, just identified
+    ]);
+    const voting = startVoting(afterNight);
+    const resolved = resolveVote(voting, 'p2'); // village votes out the tanner
+
+    expect(resolved.phase).toBe('gameover');
+    expect(resolved.winner).toBe('tanner');
+  });
+
+  it('does not win by dying at night, and the game continues normally', () => {
+    const state = setupWithTanner();
+    let s = identifyNightRoleHolders(state, ['p1']); // Alice is the werewolf
+    s = submitNightStep(s, 'p2'); // werewolf kills the tanner overnight
+    s = identifyNightRoleHolders(s, ['p2']); // Bob is the tanner
+    s = submitNightStep(s, null); // tanner has nothing to do
+    s = resolveNight(s);
+
+    expect(s.phase).toBe('day');
+    expect(s.winner).toBeNull();
+    expect(s.players.find((p) => p.id === 'p2')?.alive).toBe(false);
+  });
+
+  it('does not win when the vote eliminates no one', () => {
+    const state = setupWithTanner();
+    const afterNight = runNight(state, [
+      { identify: ['p1'], target: null },
+      { identify: ['p2'], target: null },
+    ]);
+    const voting = startVoting(afterNight);
+    const resolved = resolveVote(voting, null);
+
+    expect(resolved.phase).toBe('resolution');
+    expect(resolved.winner).toBeNull();
+  });
+});
+
 describe('win conditions', () => {
   it('villagers win when the last werewolf is voted out', () => {
     const state = createGame(

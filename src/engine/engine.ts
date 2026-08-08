@@ -336,7 +336,12 @@ export function resolveVote(state: GameState, eliminatedId: string | null): Game
     players.some((p) => p.alive && p.roleId === 'witch') && !witchPoisonUsed(state.allNightEvents);
 
   const deaths = [...state.deaths, ...newDeaths];
-  const winner = checkWinCondition(players, witchCanStillTurnTheTide);
+
+  // A lynched Tanner wins outright, regardless of the villagers/werewolves balance.
+  const eliminatedRoleId = eliminatedId ? state.players.find((p) => p.id === eliminatedId)?.roleId : undefined;
+  const winner: Team | null = eliminatedRoleId === 'tanner'
+    ? 'tanner'
+    : checkWinCondition(players, witchCanStillTurnTheTide);
 
   return {
     ...state,

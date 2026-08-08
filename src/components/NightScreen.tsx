@@ -104,6 +104,41 @@ export function NightScreen({
     );
   }
 
+  if (!role.resolveNightAction) {
+    const actingNames = step.actingPlayerIds
+      .map((id) => state.players.find((p) => p.id === id)?.name)
+      .filter(Boolean)
+      .join(' & ');
+    const instruction = role.nightInstruction?.({
+      round: state.round,
+      players: state.players,
+      eventsSoFar: state.nightEvents,
+      history: state.allNightEvents,
+      previousNightEvents: state.previousNightEvents,
+    });
+
+    return (
+      <div key={stepKey}>
+        <div className="top-bar">
+          <h1>🌙 Đêm <span className="round-num">{state.round}</span></h1>
+          <span className="role-badge role-badge-center">
+            <span className="role-badge-icon">{role.icon}</span>
+            <span className="role-badge-name">{role.name}</span>
+          </span>
+        </div>
+
+        <div className="card">
+          <h2>{actingNames}</h2>
+          <p className="muted">{instruction ?? `Gọi ${role.name} thức dậy rồi cho ngủ lại ngay.`}</p>
+        </div>
+
+        <button type="button" className="btn btn-primary" onClick={() => onSubmit(null)}>
+          Tiếp Tục
+        </button>
+      </div>
+    );
+  }
+
   if (role.id === 'witch') {
     const victimId = state.nightEvents.find((e) => e.type === 'kill')?.targetId;
     const victim = victimId ? state.players.find((p) => p.id === victimId) : undefined;

@@ -1,4 +1,4 @@
-export type Team = 'villagers' | 'werewolves';
+export type Team = 'villagers' | 'werewolves' | 'tanner';
 
 export type Phase = 'setup' | 'night' | 'day' | 'voting' | 'resolution' | 'gameover';
 

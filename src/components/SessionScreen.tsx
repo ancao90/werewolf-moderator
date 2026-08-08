@@ -7,7 +7,13 @@ function GameCard({ game }: { game: GameResult }) {
     <div className="card">
       <div className="row" style={{ gap: 8 }}>
         <span style={{ flex: 1 }}>
-          {game.winner === 'werewolves' ? '🐺 Ma Sói Thắng' : game.winner === 'villagers' ? '🧑‍🌾 Dân Làng Thắng' : 'Chưa rõ kết quả'}
+          {game.winner === 'werewolves'
+            ? '🐺 Ma Sói Thắng'
+            : game.winner === 'villagers'
+            ? '🧑‍🌾 Dân Làng Thắng'
+            : game.winner === 'tanner'
+            ? '🎭 Kẻ Chán Đời Thắng'
+            : 'Chưa rõ kết quả'}
         </span>
         <span className="muted">{formatDateTime(game.date)} · {game.rounds} đêm</span>
       </div>

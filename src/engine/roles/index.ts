@@ -5,13 +5,14 @@ import { seer } from './seer';
 import { witch } from './witch';
 import { bodyguard } from './bodyguard';
 import { hunter } from './hunter';
+import { tanner } from './tanner';
 
 /**
  * Every supported card is registered here and nowhere else.
  * To add a new card: write a RoleDefinition in its own file, import it,
  * and add it to this list. Nothing else in the engine changes.
  */
-export const ROLE_REGISTRY: RoleDefinition[] = [villager, werewolf, bodyguard, witch, seer, hunter];
+export const ROLE_REGISTRY: RoleDefinition[] = [villager, werewolf, bodyguard, witch, seer, hunter, tanner];
 
 const ROLES_BY_ID: Record<string, RoleDefinition> = Object.fromEntries(
   ROLE_REGISTRY.map((r) => [r.id, r]),

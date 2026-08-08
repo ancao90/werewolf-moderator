@@ -3,9 +3,10 @@ import type { GameState } from '../engine/types';
 
 const WOLF_CONFETTI = ['🐺', '🌙', '🩸', '🐾'];
 const VILLAGER_CONFETTI = ['🎉', '🧑‍🌾', '☀️', '✨'];
+const TANNER_CONFETTI = ['🎭', '⚰️', '🖤', '✨'];
 
-function Confetti({ winner }: { winner: 'werewolves' | 'villagers' }) {
-  const icons = winner === 'werewolves' ? WOLF_CONFETTI : VILLAGER_CONFETTI;
+function Confetti({ winner }: { winner: 'werewolves' | 'villagers' | 'tanner' }) {
+  const icons = winner === 'werewolves' ? WOLF_CONFETTI : winner === 'tanner' ? TANNER_CONFETTI : VILLAGER_CONFETTI;
   const pieces = Array.from({ length: 24 }, (_, i) => ({
     icon: icons[i % icons.length],
     left: (i * 37) % 100,
@@ -45,9 +46,11 @@ export function GameOverScreen({
       {state.winner && <Confetti winner={winner} />}
 
       <div className="card gameover-banner">
-        <span className="gameover-emoji">{winner === 'werewolves' ? '🐺' : '🧑‍🌾'}</span>
+        <span className="gameover-emoji">
+          {winner === 'werewolves' ? '🐺' : winner === 'tanner' ? '🎭' : '🧑‍🌾'}
+        </span>
         <h1 className="hero-title" style={{ fontSize: 30 }}>
-          {winner === 'werewolves' ? 'Ma Sói Thắng!' : 'Dân Làng Thắng!'}
+          {winner === 'werewolves' ? 'Ma Sói Thắng!' : winner === 'tanner' ? 'Kẻ Chán Đời Thắng!' : 'Dân Làng Thắng!'}
         </h1>
       </div>
 
