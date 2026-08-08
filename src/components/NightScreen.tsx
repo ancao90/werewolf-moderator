@@ -19,6 +19,7 @@ export function NightScreen({
   const [selected, setSelected] = useState<string[]>([]);
   const [witchHeal, setWitchHeal] = useState(false);
   const [witchPoisonTarget, setWitchPoisonTarget] = useState<string | null>(null);
+  const [targetSelected, setTargetSelected] = useState<string | null>(null);
 
   if (!step) return null;
 
@@ -242,13 +243,30 @@ export function NightScreen({
       </div>
 
       {livingPlayers.map((p) => (
-        <button key={p.id} type="button" className="btn" onClick={() => onSubmit(p.id)}>
+        <button
+          key={p.id}
+          type="button"
+          className={`btn ${targetSelected === p.id ? 'selected' : ''}`}
+          onClick={() => setTargetSelected((t) => (t === p.id ? null : p.id))}
+        >
           {p.name}
           {p.roleId && (
             <span className="muted"> — {getRole(p.roleId).icon} {getRole(p.roleId).name}</span>
           )}
         </button>
       ))}
+
+      <button
+        type="button"
+        className="btn btn-primary"
+        disabled={!targetSelected}
+        onClick={() => {
+          onSubmit(targetSelected);
+          setTargetSelected(null);
+        }}
+      >
+        Xác Nhận
+      </button>
 
       <button type="button" className="btn btn-ghost" onClick={() => onSubmit(null)}>
         Bỏ qua
