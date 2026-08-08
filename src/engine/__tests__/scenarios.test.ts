@@ -5,6 +5,7 @@ import {
   getNightReveals,
   resolveNight,
   resolveVote,
+  startNextNight,
   startVoting,
   submitNightStep,
 } from '../engine';
@@ -112,15 +113,26 @@ describe('day vote', () => {
     expect(resolved.deaths).toHaveLength(0);
   });
 
-  it('advances to the next round and re-seeds night steps after voting', () => {
+  it('goes to a resolution status screen after voting, before the next night', () => {
     const state = setupFive();
     const afterNight = runNight(state, [null, null]);
     const voting = startVoting(afterNight);
     const resolved = resolveVote(voting, 'p4');
 
-    expect(resolved.round).toBe(2);
-    expect(resolved.phase).toBe('night');
-    expect(resolved.pendingNightSteps.map((st) => st.roleId)).toEqual(['werewolf', 'seer']);
+    expect(resolved.phase).toBe('resolution');
+    expect(resolved.round).toBe(1);
+  });
+
+  it('advances to the next round and re-seeds night steps once the moderator starts the next night', () => {
+    const state = setupFive();
+    const afterNight = runNight(state, [null, null]);
+    const voting = startVoting(afterNight);
+    const resolved = resolveVote(voting, 'p4');
+    const nextNight = startNextNight(resolved);
+
+    expect(nextNight.round).toBe(2);
+    expect(nextNight.phase).toBe('night');
+    expect(nextNight.pendingNightSteps.map((st) => st.roleId)).toEqual(['werewolf', 'seer']);
   });
 });
 

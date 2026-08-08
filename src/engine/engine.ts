@@ -181,17 +181,28 @@ export function resolveVote(state: GameState, eliminatedId: string | null): Game
   }
 
   const winner = checkWinCondition(players);
-  const nextRound = state.round + 1;
 
   return {
     ...state,
-    phase: winner ? 'gameover' : 'night',
-    round: winner ? state.round : nextRound,
+    phase: winner ? 'gameover' : 'resolution',
     players,
     deaths: [...state.deaths, ...newDeaths],
-    pendingNightSteps: winner ? [] : computeNightSteps(players),
     nightEvents: [],
-    log: winner ? log : [...log, `Round ${nextRound} begins. Night falls on the village.`],
+    log,
     winner,
+  };
+}
+
+/** Moves from the post-vote status screen into the next round's night phase. */
+export function startNextNight(state: GameState): GameState {
+  if (state.phase !== 'resolution') throw new Error('Can only start the next night from the resolution phase');
+
+  const nextRound = state.round + 1;
+  return {
+    ...state,
+    phase: 'night',
+    round: nextRound,
+    pendingNightSteps: computeNightSteps(state.players),
+    log: [...state.log, `Round ${nextRound} begins. Night falls on the village.`],
   };
 }

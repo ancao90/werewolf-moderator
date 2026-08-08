@@ -4,6 +4,7 @@ import {
   getCurrentNightStep,
   resolveNight,
   resolveVote,
+  startNextNight,
   startVoting,
   submitNightStep,
   type PlayerSetup,
@@ -13,6 +14,7 @@ import { SetupScreen } from './components/SetupScreen';
 import { NightScreen } from './components/NightScreen';
 import { DayScreen } from './components/DayScreen';
 import { VotingScreen } from './components/VotingScreen';
+import { ResolutionScreen } from './components/ResolutionScreen';
 import { GameOverScreen } from './components/GameOverScreen';
 
 function App() {
@@ -42,6 +44,8 @@ function App() {
           onResolve={(eliminatedId) => setState(resolveVote(state, eliminatedId))}
         />
       );
+    case 'resolution':
+      return <ResolutionScreen state={state} onStartNight={() => setState(startNextNight(state))} />;
     case 'gameover':
       return <GameOverScreen state={state} onNewGame={() => setState(null)} />;
     default:
