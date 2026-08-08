@@ -436,6 +436,88 @@ describe('witch', () => {
   });
 });
 
+// 1 werewolf, 1 hunter, vs. 3 plain villagers.
+function setupWithHunter(): GameState {
+  return createGame(
+    [
+      { id: 'p1', name: 'Alice' },
+      { id: 'p2', name: 'Bob' },
+      { id: 'p3', name: 'Carol' },
+      { id: 'p4', name: 'Dave' },
+      { id: 'p5', name: 'Eve' },
+    ],
+    { werewolf: 1, hunter: 1, villager: 3 },
+  );
+}
+
+describe('hunter', () => {
+  it('acts after the werewolves each night, pre-marking a revenge target', () => {
+    const state = setupWithHunter();
+    const roleIds = state.pendingNightSteps.map((s) => s.roleId);
+    expect(roleIds).toEqual(['werewolf', 'hunter']);
+  });
+
+  it('automatically kills the marked target if the hunter dies to the werewolves that same night', () => {
+    const state = setupWithHunter();
+    let s = identifyNightRoleHolders(state, ['p1']); // record: Alice is the werewolf
+    s = submitNightStep(s, 'p2'); // werewolf kills Bob
+    s = identifyNightRoleHolders(s, ['p2']); // record: Bob is the hunter
+    s = submitNightStep(s, 'p1'); // Bob pre-marks Alice, in case he dies tonight
+    s = resolveNight(s);
+
+    expect(s.deaths).toEqual([
+      { playerId: 'p2', round: 1, cause: 'night' },
+      { playerId: 'p1', round: 1, cause: 'hunterNight' },
+    ]);
+    // No werewolves left -> villagers win, checked once the marked kill is applied.
+    expect(s.phase).toBe('gameover');
+    expect(s.winner).toBe('villagers');
+  });
+
+  it('leaves the marked target alone if the hunter chose not to mark anyone', () => {
+    const state = setupWithHunter();
+    let s = identifyNightRoleHolders(state, ['p1']);
+    s = submitNightStep(s, 'p2'); // werewolf kills the hunter
+    s = identifyNightRoleHolders(s, ['p2']);
+    s = submitNightStep(s, null); // hunter declines to mark anyone
+    s = resolveNight(s);
+
+    expect(s.phase).toBe('day');
+    expect(s.deaths).toEqual([{ playerId: 'p2', round: 1, cause: 'night' }]);
+  });
+
+  it('leaves the marked target alone if the hunter survives the night', () => {
+    const state = setupWithHunter();
+    let s = identifyNightRoleHolders(state, ['p1']);
+    s = submitNightStep(s, 'p3'); // werewolf kills Carol instead of the hunter
+    s = identifyNightRoleHolders(s, ['p2']);
+    s = submitNightStep(s, 'p1'); // hunter marks Alice, but doesn't die tonight
+    s = resolveNight(s);
+
+    expect(s.deaths).toEqual([{ playerId: 'p3', round: 1, cause: 'night' }]);
+    expect(s.players.find((p) => p.id === 'p1')?.alive).toBe(true);
+  });
+
+  it('applies the same night\'s marked target if the hunter is voted out the next day instead', () => {
+    const state = setupWithHunter();
+    let s = identifyNightRoleHolders(state, ['p1']); // Alice is the werewolf
+    s = submitNightStep(s, null); // werewolf passes
+    s = identifyNightRoleHolders(s, ['p2']); // Bob is the hunter
+    s = submitNightStep(s, 'p3'); // Bob pre-marks Carol
+    s = resolveNight(s);
+    expect(s.phase).toBe('day');
+
+    const voting = startVoting(s);
+    const resolved = resolveVote(voting, 'p2'); // village votes out the hunter
+
+    expect(resolved.deaths).toEqual([
+      { playerId: 'p2', round: 1, cause: 'vote' },
+      { playerId: 'p3', round: 1, cause: 'hunterVote' },
+    ]);
+    expect(resolved.phase).toBe('resolution');
+  });
+});
+
 describe('win conditions', () => {
   it('villagers win when the last werewolf is voted out', () => {
     const state = createGame(

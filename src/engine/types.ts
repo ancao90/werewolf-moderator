@@ -20,7 +20,8 @@ export type NightEvent =
   | { type: 'kill'; sourceRoleId: string; targetId: string }
   | { type: 'protect'; sourceRoleId: string; targetId: string }
   | { type: 'reveal'; sourceRoleId: string; targetId: string; info: string }
-  | { type: 'block'; sourceRoleId: string; targetId: string };
+  | { type: 'block'; sourceRoleId: string; targetId: string }
+  | { type: 'markShot'; sourceRoleId: string; targetId: string };
 
 export interface NightContext {
   round: number;
@@ -47,6 +48,13 @@ export interface RoleDefinition {
   description: string;
   /** Roles act in ascending nightOrder. `null` = no night action (e.g. Villager). */
   nightOrder: number | null;
+  /**
+   * True if dying (by any cause) also kills whoever this role's holder
+   * marked as their target that same night — e.g. the Hunter's `markShot`
+   * event, applied automatically by the resolver when they die, with no
+   * separate moderator prompt at the moment of death.
+   */
+  hasDeathTrigger?: boolean;
   /**
    * True if all living players holding this role act as one collective turn
    * (e.g. Werewolves choosing one victim together) rather than individually.
@@ -76,7 +84,7 @@ export interface NightStep {
 export interface DeathRecord {
   playerId: string;
   round: number;
-  cause: 'night' | 'vote';
+  cause: 'night' | 'vote' | 'hunterNight' | 'hunterVote';
 }
 
 export interface GameState {

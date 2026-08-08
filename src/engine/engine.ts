@@ -1,4 +1,5 @@
 import { getRole } from './roles';
+import { hunterMarkedTargetId } from './roles/hunter';
 import { witchPoisonUsed } from './roles/witch';
 import type {
   DeathRecord,
@@ -205,6 +206,31 @@ export function submitNightStep(state: GameState, targetId: string | null): Game
 }
 
 /**
+ * If any of `newDeaths` holds a death-trigger role (e.g. the Hunter), and
+ * that night's `markShot` event named a target who's still alive, kills
+ * that target too. The target is chosen in advance during the night (see
+ * hunter.ts) precisely so this can apply automatically, with no separate
+ * moderator prompt at the moment of death.
+ */
+function applyMarkedShot(
+  players: Player[],
+  newDeaths: DeathRecord[],
+  nightEvents: NightEvent[],
+  round: number,
+  cause: 'hunterNight' | 'hunterVote',
+): { players: Player[]; extraDeaths: DeathRecord[] } {
+  const triggered = newDeaths.some((d) => getRole(players.find((p) => p.id === d.playerId)!.roleId).hasDeathTrigger);
+  if (!triggered) return { players, extraDeaths: [] };
+
+  const targetId = hunterMarkedTargetId(nightEvents);
+  const target = targetId ? players.find((p) => p.id === targetId) : null;
+  if (!target?.alive) return { players, extraDeaths: [] };
+
+  const updatedPlayers = players.map((p) => (p.id === target.id ? { ...p, alive: false } : p));
+  return { players: updatedPlayers, extraDeaths: [{ playerId: target.id, round, cause }] };
+}
+
+/**
  * Applies all events collected during the night: kills minus protections
  * become deaths. Moves the game to the day phase and checks for a win.
  */
@@ -222,15 +248,19 @@ export function resolveNight(state: GameState): GameState {
       .map((e) => e.targetId),
   );
 
-  const players = state.players.map((p) =>
+  let players = state.players.map((p) =>
     killedIds.has(p.id) ? { ...p, alive: false } : p,
   );
 
-  const newDeaths: DeathRecord[] = Array.from(killedIds).map((playerId) => ({
+  let newDeaths: DeathRecord[] = Array.from(killedIds).map((playerId) => ({
     playerId,
     round: state.round,
     cause: 'night',
   }));
+
+  const shot = applyMarkedShot(players, newDeaths, state.nightEvents, state.round, 'hunterNight');
+  players = shot.players;
+  newDeaths = [...newDeaths, ...shot.extraDeaths];
 
   const log = [...state.log];
   if (newDeaths.length === 0) {
@@ -238,17 +268,22 @@ export function resolveNight(state: GameState): GameState {
   } else {
     for (const d of newDeaths) {
       const name = players.find((p) => p.id === d.playerId)?.name ?? d.playerId;
-      log.push(`Dawn breaks. ${name} was found dead.`);
+      log.push(
+        d.cause === 'hunterNight'
+          ? `${name} was shot by the dying Hunter.`
+          : `Dawn breaks. ${name} was found dead.`,
+      );
     }
   }
 
+  const deaths = [...state.deaths, ...newDeaths];
   const winner = checkWinCondition(players);
 
   return {
     ...state,
     phase: winner ? 'gameover' : 'day',
     players,
-    deaths: [...state.deaths, ...newDeaths],
+    deaths,
     log,
     winner,
   };
@@ -273,13 +308,17 @@ export function startVoting(state: GameState): GameState {
 export function resolveVote(state: GameState, eliminatedId: string | null): GameState {
   if (state.phase !== 'voting') throw new Error('Not in voting phase');
 
-  const players = eliminatedId
+  let players = eliminatedId
     ? state.players.map((p) => (p.id === eliminatedId ? { ...p, alive: false } : p))
     : state.players;
 
-  const newDeaths: DeathRecord[] = eliminatedId
+  let newDeaths: DeathRecord[] = eliminatedId
     ? [{ playerId: eliminatedId, round: state.round, cause: 'vote' }]
     : [];
+
+  const shot = applyMarkedShot(players, newDeaths, state.nightEvents, state.round, 'hunterVote');
+  players = shot.players;
+  newDeaths = [...newDeaths, ...shot.extraDeaths];
 
   const log = [...state.log];
   if (eliminatedId) {
@@ -288,16 +327,22 @@ export function resolveVote(state: GameState, eliminatedId: string | null): Game
   } else {
     log.push(`The village did not eliminate anyone.`);
   }
+  for (const d of shot.extraDeaths) {
+    const name = players.find((p) => p.id === d.playerId)?.name ?? d.playerId;
+    log.push(`${name} was shot by the dying Hunter.`);
+  }
 
   const witchCanStillTurnTheTide =
     players.some((p) => p.alive && p.roleId === 'witch') && !witchPoisonUsed(state.allNightEvents);
+
+  const deaths = [...state.deaths, ...newDeaths];
   const winner = checkWinCondition(players, witchCanStillTurnTheTide);
 
   return {
     ...state,
     phase: winner ? 'gameover' : 'resolution',
     players,
-    deaths: [...state.deaths, ...newDeaths],
+    deaths,
     nightEvents: [],
     previousNightEvents: state.nightEvents,
     log,

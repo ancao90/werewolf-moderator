@@ -9,7 +9,7 @@ export function ResolutionScreen({
   onStartNight: () => void;
 }) {
   const eliminated = state.deaths.filter(
-    (d) => d.round === state.round && d.cause === 'vote',
+    (d) => d.round === state.round && (d.cause === 'vote' || d.cause === 'hunterVote'),
   );
 
   return (

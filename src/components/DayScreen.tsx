@@ -11,7 +11,7 @@ export function DayScreen({
 }) {
   const reveals = getNightReveals(state);
   const lastNightDeaths = state.deaths.filter(
-    (d) => d.round === state.round && d.cause === 'night',
+    (d) => d.round === state.round && (d.cause === 'night' || d.cause === 'hunterNight'),
   );
 
   return (
