@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { getRole } from '../engine/roles';
 import type { GameState } from '../engine/types';
 
@@ -9,6 +10,8 @@ export function VotingScreen({
   onResolve: (eliminatedId: string | null) => void;
 }) {
   const livingPlayers = state.players.filter((p) => p.alive);
+  const [selected, setSelected] = useState<string | null>(null);
+  const [tie, setTie] = useState(false);
 
   return (
     <div>
@@ -19,13 +22,37 @@ export function VotingScreen({
       <h2 style={{ marginBottom: 16 }}>Làng đã bầu loại ai?</h2>
 
       {livingPlayers.map((p) => (
-        <button key={p.id} type="button" className="btn" onClick={() => onResolve(p.id)}>
+        <button
+          key={p.id}
+          type="button"
+          className={`btn ${selected === p.id ? 'selected' : ''}`}
+          onClick={() => {
+            setSelected(p.id);
+            setTie(false);
+          }}
+        >
           {p.name}
           {p.roleId && <span className="muted"> — {getRole(p.roleId).icon} {getRole(p.roleId).name}</span>}
         </button>
       ))}
 
-      <button type="button" className="btn btn-ghost" onClick={() => onResolve(null)}>
+      <button
+        type="button"
+        className="btn btn-primary"
+        disabled={!selected && !tie}
+        onClick={() => onResolve(selected)}
+      >
+        Xác Nhận
+      </button>
+
+      <button
+        type="button"
+        className={`btn btn-ghost ${tie ? 'selected' : ''}`}
+        onClick={() => {
+          setTie(true);
+          setSelected(null);
+        }}
+      >
         Không loại ai (hòa phiếu)
       </button>
     </div>
