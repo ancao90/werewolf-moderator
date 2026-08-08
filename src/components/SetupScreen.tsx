@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ROLE_REGISTRY } from '../engine/roles';
 import type { PlayerSetup } from '../engine/engine';
 import type { GameSession } from '../history';
@@ -47,6 +47,8 @@ export function SetupScreen({
   onBack: () => void;
 }) {
   const [players, setPlayers] = useState<DraftPlayer[]>(makeInitialPlayers);
+  const [focusPlayerId, setFocusPlayerId] = useState<string | null>(null);
+  const inputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   const [counts, setCounts] = useState<Record<string, number>>({
     werewolf: 2,
@@ -66,8 +68,17 @@ export function SetupScreen({
   }, [players]);
 
   function addPlayer() {
-    setPlayers((ps) => [...ps, { id: `p${nextId++}`, name: '' }]);
+    const id = `p${nextId++}`;
+    setPlayers((ps) => [...ps, { id, name: '' }]);
+    setFocusPlayerId(id);
   }
+
+  useEffect(() => {
+    if (focusPlayerId) {
+      inputRefs.current[focusPlayerId]?.focus();
+      setFocusPlayerId(null);
+    }
+  }, [focusPlayerId]);
 
   function clearRoster() {
     setPlayers([
@@ -88,7 +99,12 @@ export function SetupScreen({
   }
 
   function updateCount(roleId: string, count: number) {
-    setCounts((c) => ({ ...c, [roleId]: Math.max(0, count) }));
+    setCounts((c) => {
+      const current = c[roleId] ?? 0;
+      const otherTotal = Object.values(c).reduce((sum, n) => sum + n, 0) - current;
+      const max = Math.max(current, players.length - otherTotal);
+      return { ...c, [roleId]: Math.min(max, Math.max(0, count)) };
+    });
   }
 
   const totalAssigned = Object.values(counts).reduce((sum, n) => sum + n, 0);
@@ -125,6 +141,9 @@ export function SetupScreen({
           <div key={p.id} className="row" style={{ gap: 8 }}>
             <span className="muted" style={{ width: 18 }}>{i + 1}</span>
             <input
+              ref={(el) => {
+                inputRefs.current[p.id] = el;
+              }}
               type="text"
               placeholder="Tên người chơi"
               value={p.name}
@@ -172,6 +191,7 @@ export function SetupScreen({
               type="button"
               className="btn-ghost"
               aria-label={`Tăng số lượng ${r.name}`}
+              disabled={totalAssigned >= players.length}
               onClick={() => updateCount(r.id, (counts[r.id] ?? 0) + 1)}
             >
               +
