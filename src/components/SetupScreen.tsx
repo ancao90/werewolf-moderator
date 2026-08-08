@@ -100,7 +100,7 @@ export function SetupScreen({
         </p>
       </div>
 
-      <div className="row" style={{ gap: 8 }}>
+      <div className="row" style={{ gap: 8, borderBottom: 'none' }}>
         <button type="button" className="btn-ghost" onClick={onBack}>
           ← Phiên lúc {formatDateTime(session.createdAt)}
         </button>
@@ -129,7 +129,7 @@ export function SetupScreen({
         ))}
       </div>
 
-      <div className="row" style={{ gap: 8 }}>
+      <div className="row" style={{ gap: 8, borderBottom: 'none' }}>
         <button type="button" className="btn" onClick={addPlayer}>
           + Thêm người chơi
         </button>
