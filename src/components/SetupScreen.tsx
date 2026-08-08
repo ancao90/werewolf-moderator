@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { ROLE_REGISTRY } from '../engine/roles';
 import type { PlayerSetup } from '../engine/engine';
 
@@ -9,18 +9,31 @@ interface DraftPlayer {
 
 let nextId = 1;
 
+const ROSTER_KEY = 'werewolf_roster';
+
+function loadRoster(): string[] {
+  try {
+    const raw = localStorage.getItem(ROSTER_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed.filter((n) => typeof n === 'string') : [];
+  } catch {
+    return [];
+  }
+}
+
+function makeInitialPlayers(): DraftPlayer[] {
+  const saved = loadRoster();
+  const names = saved.length > 0 ? saved : ['', '', '', '', ''];
+  return names.map((name) => ({ id: `p${nextId++}`, name }));
+}
+
 export function SetupScreen({
   onStart,
 }: {
   onStart: (setup: PlayerSetup[], roleComposition: Record<string, number>) => void;
 }) {
-  const [players, setPlayers] = useState<DraftPlayer[]>([
-    { id: `p${nextId++}` },
-    { id: `p${nextId++}` },
-    { id: `p${nextId++}` },
-    { id: `p${nextId++}` },
-    { id: `p${nextId++}` },
-  ].map((p) => ({ ...p, name: '' })));
+  const [players, setPlayers] = useState<DraftPlayer[]>(makeInitialPlayers);
 
   const [counts, setCounts] = useState<Record<string, number>>({
     werewolf: 2,
@@ -28,8 +41,23 @@ export function SetupScreen({
     seer: 1,
   });
 
+  useEffect(() => {
+    const names = players.map((p) => p.name);
+    localStorage.setItem(ROSTER_KEY, JSON.stringify(names));
+  }, [players]);
+
   function addPlayer() {
     setPlayers((ps) => [...ps, { id: `p${nextId++}`, name: '' }]);
+  }
+
+  function clearRoster() {
+    setPlayers([
+      { id: `p${nextId++}`, name: '' },
+      { id: `p${nextId++}`, name: '' },
+      { id: `p${nextId++}`, name: '' },
+      { id: `p${nextId++}`, name: '' },
+      { id: `p${nextId++}`, name: '' },
+    ]);
   }
 
   function removePlayer(id: string) {
@@ -89,9 +117,14 @@ export function SetupScreen({
         ))}
       </div>
 
-      <button type="button" className="btn" onClick={addPlayer}>
-        + Thêm người chơi
-      </button>
+      <div className="row" style={{ gap: 8 }}>
+        <button type="button" className="btn" onClick={addPlayer}>
+          + Thêm người chơi
+        </button>
+        <button type="button" className="btn-ghost" onClick={clearRoster}>
+          Xóa hết, nhập nhóm mới
+        </button>
+      </div>
 
       <div className="card">
         <h2>Bộ vai trò</h2>
