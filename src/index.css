@@ -498,17 +498,6 @@ button {
 
 .log p { margin: 0 0 4px; }
 
-.reveal-box {
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: var(--accent-text);
-  border-radius: 12px;
-  padding: 14px;
-  margin-bottom: 8px;
-  font-weight: 600;
-  box-shadow: 0 10px 24px -12px rgba(124, 58, 237, 0.5);
-  animation: fadeInUp 0.35s ease;
-}
-
 /* ---------- inputs ---------- */
 
 input[type="text"] {
