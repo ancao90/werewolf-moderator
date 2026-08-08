@@ -6,7 +6,7 @@ const STAR_POSITIONS = [
 
 export function getPhaseTheme(phase: string): 'night' | 'day' | null {
   if (phase === 'night' || phase === 'setup') return 'night';
-  if (phase === 'day' || phase === 'voting' || phase === 'resolution') return 'day';
+  if (phase === 'day' || phase === 'voting' || phase === 'resolution' || phase === 'gameover') return 'day';
   return null;
 }
 
