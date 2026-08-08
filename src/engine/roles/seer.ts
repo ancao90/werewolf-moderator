@@ -4,6 +4,7 @@ import { getRole } from './index';
 export const seer: RoleDefinition = {
   id: 'seer',
   name: 'Tiên Tri',
+  icon: '🔮',
   team: 'villagers',
   description: 'Mỗi đêm, bí mật soi phe thật của một người chơi.',
   nightOrder: 20,

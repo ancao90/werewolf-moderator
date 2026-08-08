@@ -3,6 +3,7 @@ import type { RoleDefinition } from '../types';
 export const werewolf: RoleDefinition = {
   id: 'werewolf',
   name: 'Ma Sói',
+  icon: '🐺',
   team: 'werewolves',
   description: 'Mỗi đêm, tất cả Ma Sói cùng chọn một người chơi để giết.',
   nightOrder: 10,

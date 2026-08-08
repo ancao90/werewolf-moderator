@@ -36,6 +36,8 @@ export interface NightContext {
 export interface RoleDefinition {
   id: string;
   name: string;
+  /** Single emoji shown on the night hand-off screen and other role badges. */
+  icon: string;
   team: Team;
   description: string;
   /** Roles act in ascending nightOrder. `null` = no night action (e.g. Villager). */

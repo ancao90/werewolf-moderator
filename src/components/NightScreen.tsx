@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from 'react';
 import { getRole } from '../engine/roles';
 import { getCurrentNightStep } from '../engine/engine';
 import type { GameState } from '../engine/types';
@@ -10,6 +11,18 @@ export function NightScreen({
   onSubmit: (targetId: string | null) => void;
 }) {
   const step = getCurrentNightStep(state);
+  const stepKey = step ? `${state.round}-${step.roleId}` : null;
+
+  const [flashKey, setFlashKey] = useState<string | null>(null);
+  const prevKey = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (stepKey && prevKey.current !== null && prevKey.current !== stepKey) {
+      setFlashKey(stepKey);
+    }
+    prevKey.current = stepKey;
+  }, [stepKey]);
+
   if (!step) return null;
 
   const role = getRole(step.roleId);
@@ -25,10 +38,18 @@ export function NightScreen({
   });
 
   return (
-    <div>
+    <div key={stepKey}>
+      {flashKey === stepKey && (
+        <div className="role-flash" onAnimationEnd={() => setFlashKey(null)}>
+          <span className="role-flash-icon">{role.icon}</span>
+          <h1 className="role-flash-title">{role.name}</h1>
+          <p className="role-flash-names">{actingNames}</p>
+        </div>
+      )}
+
       <div className="top-bar">
         <h1>🌙 Đêm <span className="round-num">{state.round}</span></h1>
-        <span className="pill">{role.name}</span>
+        <span className="pill">{role.icon} {role.name}</span>
       </div>
 
       <div className="card">
