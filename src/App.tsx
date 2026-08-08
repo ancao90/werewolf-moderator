@@ -20,6 +20,7 @@ import { GameOverScreen } from './components/GameOverScreen';
 import { HomeScreen } from './components/HomeScreen';
 import { SessionScreen } from './components/SessionScreen';
 import { Backdrop, getPhaseTheme } from './components/Backdrop';
+import { ConfirmModal } from './components/ConfirmModal';
 import { createSession, getSession, loadSessions, recordGameResult } from './history';
 
 const GAME_KEY = 'werewolf_game';
@@ -51,6 +52,7 @@ function App() {
     localStorage.getItem(SESSION_ID_KEY),
   );
   const [subView, setSubView] = useState<'sessionDetail' | 'setup'>('sessionDetail');
+  const [confirmStop, setConfirmStop] = useState(false);
 
   useEffect(() => {
     if (state) localStorage.setItem(GAME_KEY, JSON.stringify(state));
@@ -98,6 +100,12 @@ function App() {
     setSubView('sessionDetail');
   }
 
+  function handleStopGame() {
+    setState(null);
+    setSubView('setup');
+    setConfirmStop(false);
+  }
+
   if (!sessionId) {
     return (
       <>
@@ -138,9 +146,30 @@ function App() {
     );
   }
 
+  const canStop = state.phase !== 'gameover';
+
   return (
     <>
       <Backdrop phase={state.phase} />
+      {canStop && (
+        <button
+          type="button"
+          className="stop-game-btn"
+          aria-label="Dừng ván"
+          onClick={() => setConfirmStop(true)}
+        >
+          ✕
+        </button>
+      )}
+      {confirmStop && (
+        <ConfirmModal
+          title="Dừng ván đấu?"
+          message="Ván hiện tại sẽ bị hủy và không được lưu vào lịch sử. Bạn có thể bắt đầu một ván mới ngay sau đó."
+          confirmLabel="Dừng ván"
+          onConfirm={handleStopGame}
+          onCancel={() => setConfirmStop(false)}
+        />
+      )}
       {(() => {
         switch (state.phase) {
           case 'night':
