@@ -1,0 +1,14 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm create *)",
+      "Bash(nvm --version)",
+      "Read(//Users/ancao/**)",
+      "Bash(brew list *)",
+      "Bash(npx tsc *)",
+      "Bash(npm test *)",
+      "Bash(git init *)",
+      "Bash(git add *)"
+    ]
+  }
+}
