@@ -27,7 +27,7 @@ export function VotingScreen({
           type="button"
           className={`btn ${selected === p.id ? 'selected' : ''}`}
           onClick={() => {
-            setSelected(p.id);
+            setSelected((s) => (s === p.id ? null : p.id));
             setTie(false);
           }}
         >
@@ -49,7 +49,7 @@ export function VotingScreen({
         type="button"
         className={`btn btn-ghost ${tie ? 'selected' : ''}`}
         onClick={() => {
-          setTie(true);
+          setTie((t) => !t);
           setSelected(null);
         }}
       >
