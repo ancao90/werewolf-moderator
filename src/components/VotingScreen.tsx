@@ -15,9 +15,7 @@ export function VotingScreen({
         <h1>🗳️ Bỏ Phiếu</h1>
       </div>
 
-      <div className="card">
-        <h2>Làng đã bầu loại ai?</h2>
-      </div>
+      <h2 style={{ marginBottom: 16 }}>Làng đã bầu loại ai?</h2>
 
       {livingPlayers.map((p) => (
         <button key={p.id} type="button" className="btn" onClick={() => onResolve(p.id)}>
