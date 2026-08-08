@@ -49,6 +49,12 @@ export interface RoleDefinition {
   /** Roles act in ascending nightOrder. `null` = no night action (e.g. Villager). */
   nightOrder: number | null;
   /**
+   * True if this role is only called on round 1 (e.g. to let the moderator
+   * identify its holder) and skipped on every later round, unlike most
+   * acting roles which are called every night.
+   */
+  firstNightOnly?: boolean;
+  /**
    * True if dying (by any cause) also kills whoever this role's holder
    * marked as their target that same night — e.g. the Hunter's `markShot`
    * event, applied automatically by the resolver when they die, with no

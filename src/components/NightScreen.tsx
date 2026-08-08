@@ -251,7 +251,7 @@ export function NightScreen({
       ))}
 
       <button type="button" className="btn btn-ghost" onClick={() => onSubmit(null)}>
-        Bỏ qua / Không chọn
+        Bỏ qua
       </button>
     </div>
   );

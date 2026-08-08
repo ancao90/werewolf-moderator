@@ -32,7 +32,7 @@ function computeNightSteps(players: Player[], roleComposition: Record<string, nu
   const steps = Object.entries(roleComposition)
     .filter(([, count]) => count > 0)
     .map(([roleId]) => getRole(roleId))
-    .filter((role) => role.nightOrder !== null)
+    .filter((role) => role.nightOrder !== null && !role.firstNightOnly)
     .sort((a, b) => (a.nightOrder as number) - (b.nightOrder as number))
     .map((role): NightStep => {
       const actingPlayerIds = alive

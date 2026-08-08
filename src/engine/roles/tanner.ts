@@ -12,5 +12,6 @@ export const tanner: RoleDefinition = {
   // night. Unlike the Villager, Tanner's specific identity is win-condition
   // critical, so it can't be left to the silent passive-role fallback.
   nightOrder: 90,
+  firstNightOnly: true,
   nightInstruction: () => 'Kẻ Chán Đời, hãy thức dậy để quản trò xác nhận, rồi ngủ lại ngay — không cần làm gì đêm nay.',
 };
