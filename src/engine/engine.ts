@@ -1,4 +1,5 @@
 import { getRole } from './roles';
+import { witchPoisonUsed } from './roles/witch';
 import type {
   DeathRecord,
   GameState,
@@ -79,12 +80,21 @@ function fillRemainingPassiveRoles(players: Player[], roleComposition: Record<st
   return players.map((p) => (p.roleId ? p : { ...p, roleId: remainingSlots[i++] }));
 }
 
-export function checkWinCondition(players: Player[]): Team | null {
+/**
+ * `canVillagersStillTurnTheTide` covers the one case where reaching parity
+ * doesn't yet decide the game: a living Witch with her poison potion still
+ * unused could still kill a werewolf before the villagers would ever need
+ * to outvote them. Only pass this true right after a day vote — once a
+ * night has resolved, the Witch (if any) already had that night's chance
+ * to act, so parity there is final.
+ */
+export function checkWinCondition(players: Player[], canVillagersStillTurnTheTide = false): Team | null {
   const alive = livingPlayers(players);
   const werewolves = alive.filter((p) => getRole(p.roleId).team === 'werewolves');
   const villagers = alive.filter((p) => getRole(p.roleId).team === 'villagers');
 
   if (werewolves.length === 0) return 'villagers';
+  if (werewolves.length === villagers.length && canVillagersStillTurnTheTide) return null;
   if (werewolves.length >= villagers.length) return 'werewolves';
   return null;
 }
@@ -277,7 +287,9 @@ export function resolveVote(state: GameState, eliminatedId: string | null): Game
     log.push(`The village did not eliminate anyone.`);
   }
 
-  const winner = checkWinCondition(players);
+  const witchCanStillTurnTheTide =
+    players.some((p) => p.alive && p.roleId === 'witch') && !witchPoisonUsed(state.allNightEvents);
+  const winner = checkWinCondition(players, witchCanStillTurnTheTide);
 
   return {
     ...state,

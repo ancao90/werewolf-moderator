@@ -275,6 +275,72 @@ describe('witch', () => {
     expect(eve?.alive).toBe(false);
     expect(afterSecondNight.deaths).toEqual([{ playerId: 'p5', round: 2, cause: 'night' }]);
   });
+
+  it('keeps the game open at parity while the witch still has her poison, and lets her decide it that night', () => {
+    const state = createGame(
+      [
+        { id: 'p1', name: 'Alice' },
+        { id: 'p2', name: 'Bob' },
+        { id: 'p3', name: 'Carol' },
+        { id: 'p4', name: 'Dave' },
+      ],
+      { werewolf: 1, witch: 1, villager: 2 },
+    );
+
+    // Round 1: no one acts; vote out Carol. 1 werewolf vs. 2 villagers-team (Bob + Dave) — not parity yet.
+    const round1 = runNight(state, [
+      { identify: ['p1'], target: null },
+      { identify: ['p2'], target: null },
+    ]);
+    const afterVote1 = resolveVote(startVoting(round1), 'p3');
+    expect(afterVote1.winner).toBeNull();
+
+    // Round 2: no one acts; vote out Dave. Now 1 werewolf vs. 1 witch — parity, but the
+    // witch's poison is still unused, so the game must stay open instead of handing
+    // werewolves the win.
+    const round2 = startNextNight(afterVote1);
+    let s = submitNightStep(round2, null); // werewolf
+    s = submitNightStep(s, null); // witch
+    const afterVote2 = resolveVote(startVoting(resolveNight(s)), 'p4');
+
+    expect(afterVote2.winner).toBeNull();
+    expect(afterVote2.phase).toBe('resolution');
+
+    // That night, the witch poisons the last werewolf and wins it for the village.
+    const round3 = startNextNight(afterVote2);
+    let s2 = submitNightStep(round3, null); // werewolf
+    s2 = submitNightStep(s2, `${WITCH_POISON_PREFIX}p1`); // witch poisons Alice
+    const afterNight3 = resolveNight(s2);
+
+    expect(afterNight3.phase).toBe('gameover');
+    expect(afterNight3.winner).toBe('villagers');
+  });
+
+  it('still lets werewolves win at parity once the witch has already spent her poison', () => {
+    const state = createGame(
+      [
+        { id: 'p1', name: 'Alice' },
+        { id: 'p2', name: 'Bob' },
+        { id: 'p3', name: 'Carol' },
+        { id: 'p4', name: 'Dave' },
+      ],
+      { werewolf: 1, witch: 1, villager: 2 },
+    );
+
+    // Round 1: the witch spends her poison on Dave, unrelated to parity.
+    const afterNight1 = runNight(state, [
+      { identify: ['p1'], target: null },
+      { identify: ['p2'], target: `${WITCH_POISON_PREFIX}p4` },
+    ]);
+    expect(afterNight1.players.find((p) => p.id === 'p4')?.alive).toBe(false);
+
+    // Voting out Carol now reaches parity (1 werewolf vs. the witch), but her poison
+    // is already spent — there's nothing left to turn the tide, so it's decided.
+    const resolved = resolveVote(startVoting(afterNight1), 'p3');
+
+    expect(resolved.phase).toBe('gameover');
+    expect(resolved.winner).toBe('werewolves');
+  });
 });
 
 describe('win conditions', () => {
