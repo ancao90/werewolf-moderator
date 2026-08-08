@@ -197,7 +197,7 @@ export function NightScreen({
                 onClick={() => setWitchPoisonTarget((t) => (t === p.id ? null : p.id))}
               >
                 {p.name}
-                {state.round > 1 && p.roleId && (
+                {p.roleId && (
                   <span className="muted"> — {getRole(p.roleId).icon} {getRole(p.roleId).name}</span>
                 )}
               </button>
@@ -244,7 +244,7 @@ export function NightScreen({
       {livingPlayers.map((p) => (
         <button key={p.id} type="button" className="btn" onClick={() => onSubmit(p.id)}>
           {p.name}
-          {state.round > 1 && p.roleId && (
+          {p.roleId && (
             <span className="muted"> — {getRole(p.roleId).icon} {getRole(p.roleId).name}</span>
           )}
         </button>
