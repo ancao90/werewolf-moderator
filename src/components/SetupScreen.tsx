@@ -30,8 +30,10 @@ function makeInitialPlayers(): DraftPlayer[] {
 
 export function SetupScreen({
   onStart,
+  onViewHistory,
 }: {
   onStart: (setup: PlayerSetup[], roleComposition: Record<string, number>) => void;
+  onViewHistory: () => void;
 }) {
   const [players, setPlayers] = useState<DraftPlayer[]>(makeInitialPlayers);
 
@@ -170,6 +172,10 @@ export function SetupScreen({
         onClick={handleStart}
       >
         Bắt Đầu
+      </button>
+
+      <button type="button" className="btn-ghost" onClick={onViewHistory}>
+        📜 Xem lịch sử ván đấu
       </button>
     </div>
   );

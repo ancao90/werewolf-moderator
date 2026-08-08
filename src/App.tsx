@@ -17,7 +17,9 @@ import { DayScreen } from './components/DayScreen';
 import { VotingScreen } from './components/VotingScreen';
 import { ResolutionScreen } from './components/ResolutionScreen';
 import { GameOverScreen } from './components/GameOverScreen';
+import { HistoryScreen } from './components/HistoryScreen';
 import { Backdrop, getPhaseTheme } from './components/Backdrop';
+import { loadHistory, recordGameResult } from './history';
 
 const GAME_KEY = 'werewolf_game';
 
@@ -43,6 +45,7 @@ function loadGame(): GameState | null {
 
 function App() {
   const [state, setState] = useState<GameState | null>(loadGame);
+  const [view, setView] = useState<'setup' | 'history'>('setup');
 
   useEffect(() => {
     if (state) localStorage.setItem(GAME_KEY, JSON.stringify(state));
@@ -59,6 +62,7 @@ function App() {
     let next = submitNightStep(state!, targetId);
     if (getCurrentNightStep(next) === null) {
       next = resolveNight(next);
+      if (next.phase === 'gameover') recordGameResult(next);
     }
     setState(next);
   }
@@ -71,11 +75,16 @@ function App() {
     return (
       <>
         <Backdrop phase="setup" />
-        <SetupScreen
-          onStart={(setup: PlayerSetup[], roleComposition: Record<string, number>) =>
-            setState(createGame(setup, roleComposition))
-          }
-        />
+        {view === 'history' ? (
+          <HistoryScreen history={loadHistory()} onBack={() => setView('setup')} />
+        ) : (
+          <SetupScreen
+            onStart={(setup: PlayerSetup[], roleComposition: Record<string, number>) =>
+              setState(createGame(setup, roleComposition))
+            }
+            onViewHistory={() => setView('history')}
+          />
+        )}
       </>
     );
   }
@@ -93,7 +102,11 @@ function App() {
             return (
               <VotingScreen
                 state={state}
-                onResolve={(eliminatedId) => setState(resolveVote(state, eliminatedId))}
+                onResolve={(eliminatedId) => {
+                  const next = resolveVote(state, eliminatedId);
+                  if (next.phase === 'gameover') recordGameResult(next);
+                  setState(next);
+                }}
               />
             );
           case 'resolution':
