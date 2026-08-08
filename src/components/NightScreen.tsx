@@ -27,7 +27,7 @@ export function NightScreen({
     function toggle(id: string) {
       setSelected((sel) => {
         if (sel.includes(id)) return sel.filter((x) => x !== id);
-        if (sel.length >= expected) return sel;
+        if (sel.length >= expected) return [...sel.slice(1), id];
         return [...sel, id];
       });
     }
