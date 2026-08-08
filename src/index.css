@@ -15,8 +15,8 @@
   --gold: #b9852f;
   --shadow: 0 8px 24px -12px rgba(76, 29, 149, 0.25);
 
-  --display: 'Cinzel Decorative', 'Cinzel', serif;
-  --heading: 'Cinzel', 'Cinzel Decorative', serif;
+  --display: 'Playfair Display', Georgia, serif;
+  --heading: 'Playfair Display', Georgia, serif;
   --sans: 'Inter', system-ui, 'Segoe UI', Roboto, sans-serif;
 
   color-scheme: light dark;
