@@ -5,7 +5,8 @@
       "name": "werewolf-dev",
       "runtimeExecutable": "/Users/ancao/working/werewolf_moderator/dev.sh",
       "runtimeArgs": [],
-      "port": 5173
+      "port": 5173,
+      "autoPort": true
     }
   ]
 }
