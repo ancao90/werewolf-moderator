@@ -336,6 +336,48 @@ button {
   color: var(--danger);
 }
 
+.role-badge {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.role-badge-center {
+  position: absolute;
+  left: 50%;
+  top: 14px;
+  transform: translateX(-50%);
+}
+
+.top-bar:has(.role-badge-center) {
+  padding-bottom: 49px;
+}
+
+.role-badge-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  font-size: 28px;
+  line-height: 1;
+  text-align: center;
+  padding-left: 0.15em;
+  background: linear-gradient(135deg, var(--accent), var(--accent-2));
+  box-shadow: 0 8px 20px -8px rgba(124, 58, 237, 0.6);
+}
+
+.role-badge-name {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--text);
+  text-align: center;
+}
+
 .row {
   display: flex;
   align-items: center;
@@ -355,6 +397,7 @@ button {
 }
 
 .top-bar {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;

@@ -36,7 +36,10 @@ export function NightScreen({
       <div key={stepKey}>
         <div className="top-bar">
           <h1>🌙 Đêm <span className="round-num">{state.round}</span></h1>
-          <span className="pill">{role.icon} {role.name}</span>
+          <span className="role-badge role-badge-center">
+            <span className="role-badge-icon">{role.icon}</span>
+            <span className="role-badge-name">{role.name}</span>
+          </span>
         </div>
 
         <div className="card">
@@ -87,7 +90,10 @@ export function NightScreen({
     <div key={stepKey}>
       <div className="top-bar">
         <h1>🌙 Đêm <span className="round-num">{state.round}</span></h1>
-        <span className="pill">{role.icon} {role.name}</span>
+        <span className="role-badge role-badge-center">
+          <span className="role-badge-icon">{role.icon}</span>
+          <span className="role-badge-name">{role.name}</span>
+        </span>
       </div>
 
       <div className="card">
