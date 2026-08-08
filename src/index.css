@@ -400,8 +400,8 @@ button {
 }
 
 .pill.dead {
-  background: var(--danger-bg);
-  color: var(--danger);
+  background: var(--border);
+  color: var(--muted);
 }
 
 .role-badge {
@@ -458,9 +458,17 @@ button {
 
 .row:last-child { border-bottom: none; }
 
+.row:not(:has(.pill.dead)) span:first-child {
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+.row:has(.pill.dead) {
+  opacity: 0.45;
+}
+
 .row .pill.dead ~ span,
 .row:has(.pill.dead) span:first-child {
-  opacity: 0.5;
   text-decoration: line-through;
 }
 
