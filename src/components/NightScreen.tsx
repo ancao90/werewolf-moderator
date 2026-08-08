@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { getRole } from '../engine/roles';
 import { WITCH_HEAL, WITCH_POISON_PREFIX, witchHealUsed, witchPoisonUsed } from '../engine/roles/witch';
+import { bodyguardRepeatTargetId } from '../engine/roles/bodyguard';
 import { getCurrentNightStep, needsIdentification } from '../engine/engine';
 import type { GameState } from '../engine/types';
 
@@ -180,12 +181,14 @@ export function NightScreen({
     .map((id) => state.players.find((p) => p.id === id)?.name)
     .filter(Boolean)
     .join(' & ');
-  const livingPlayers = state.players.filter((p) => p.alive);
+  const repeatTargetId = role.id === 'bodyguard' ? bodyguardRepeatTargetId(state.previousNightEvents) : null;
+  const livingPlayers = state.players.filter((p) => p.alive && p.id !== repeatTargetId);
   const instruction = role.nightInstruction?.({
     round: state.round,
     players: state.players,
     eventsSoFar: state.nightEvents,
     history: state.allNightEvents,
+    previousNightEvents: state.previousNightEvents,
   });
 
   return (

@@ -121,6 +121,7 @@ export function createGame(setup: PlayerSetup[], roleComposition: Record<string,
     pendingNightSteps: computeInitialNightSteps(roleComposition),
     nightEvents: [],
     allNightEvents: [],
+    previousNightEvents: [],
     deaths: [],
     log: [`Round 1 begins. Night falls on the village.`],
     winner: null,
@@ -189,6 +190,7 @@ export function submitNightStep(state: GameState, targetId: string | null): Game
           players: state.players,
           eventsSoFar: state.nightEvents,
           history: state.allNightEvents,
+          previousNightEvents: state.previousNightEvents,
         },
         targetId,
       )
@@ -297,6 +299,7 @@ export function resolveVote(state: GameState, eliminatedId: string | null): Game
     players,
     deaths: [...state.deaths, ...newDeaths],
     nightEvents: [],
+    previousNightEvents: state.nightEvents,
     log,
     winner,
   };

@@ -39,6 +39,19 @@ function setupFive(): GameState {
   );
 }
 
+// 1 werewolf, 1 bodyguard, vs. 2 plain villagers.
+function setupWithBodyguard(): GameState {
+  return createGame(
+    [
+      { id: 'p1', name: 'Alice' },
+      { id: 'p2', name: 'Bob' },
+      { id: 'p3', name: 'Carol' },
+      { id: 'p4', name: 'Dave' },
+    ],
+    { werewolf: 1, bodyguard: 1, villager: 2 },
+  );
+}
+
 // 2 werewolves, 1 witch, 1 seer, vs. 3 plain villagers.
 function setupWithWitch(): GameState {
   return createGame(
@@ -136,6 +149,86 @@ describe('werewolf kill', () => {
     ]);
     expect(afterNight.deaths).toHaveLength(0);
     expect(afterNight.players.every((p) => p.alive)).toBe(true);
+  });
+});
+
+describe('bodyguard', () => {
+  it('acts before the werewolves, so their protection is already in place for the kill', () => {
+    const state = setupWithBodyguard();
+    const step1 = getCurrentNightStep(state);
+    expect(step1?.roleId).toBe('bodyguard');
+
+    const identified = identifyNightRoleHolders(state, ['p2']);
+    const afterBodyguard = submitNightStep(identified, 'p3');
+    const step2 = getCurrentNightStep(afterBodyguard);
+    expect(step2?.roleId).toBe('werewolf');
+  });
+
+  it('saves the protected player from the werewolf kill', () => {
+    const state = setupWithBodyguard();
+    const afterNight = runNight(state, [
+      { identify: ['p2'], target: 'p3' }, // bodyguard protects Carol
+      { identify: ['p1'], target: 'p3' }, // werewolf kills Carol
+    ]);
+
+    const carol = afterNight.players.find((p) => p.id === 'p3');
+    expect(carol?.alive).toBe(true);
+    expect(afterNight.deaths).toHaveLength(0);
+  });
+
+  it("doesn't stop a kill on someone other than the protected player", () => {
+    const state = setupWithBodyguard();
+    const afterNight = runNight(state, [
+      { identify: ['p2'], target: 'p3' }, // bodyguard protects Carol
+      { identify: ['p1'], target: 'p4' }, // werewolf kills Dave instead
+    ]);
+
+    const dave = afterNight.players.find((p) => p.id === 'p4');
+    expect(dave?.alive).toBe(false);
+    expect(afterNight.deaths).toEqual([{ playerId: 'p4', round: 1, cause: 'night' }]);
+  });
+
+  it("can't protect the same player on two consecutive nights", () => {
+    const state = setupWithBodyguard();
+    const afterFirstNight = runNight(state, [
+      { identify: ['p2'], target: 'p3' }, // bodyguard protects Carol
+      { identify: ['p1'], target: null }, // werewolf passes
+    ]);
+    const afterVote = resolveVote(startVoting(afterFirstNight), null);
+    const secondNight = startNextNight(afterVote);
+
+    // Round 2+: roles are already known, so no identify calls are needed.
+    let s = submitNightStep(secondNight, 'p3'); // bodyguard tries to protect Carol again
+    s = submitNightStep(s, 'p3'); // werewolf kills Carol
+    const afterSecondNight = resolveNight(s);
+
+    const carol = afterSecondNight.players.find((p) => p.id === 'p3');
+    expect(carol?.alive).toBe(false);
+    expect(afterSecondNight.deaths).toEqual([{ playerId: 'p3', round: 2, cause: 'night' }]);
+  });
+
+  it('can protect the same player again once a night has passed in between', () => {
+    const state = setupWithBodyguard();
+    const afterFirstNight = runNight(state, [
+      { identify: ['p2'], target: 'p3' }, // bodyguard protects Carol
+      { identify: ['p1'], target: null }, // werewolf passes
+    ]);
+    const afterVote1 = resolveVote(startVoting(afterFirstNight), null);
+    const secondNight = startNextNight(afterVote1);
+
+    let s = submitNightStep(secondNight, 'p4'); // bodyguard protects Dave instead
+    s = submitNightStep(s, null); // werewolf passes
+    const afterSecondNight = resolveNight(s);
+    const afterVote2 = resolveVote(startVoting(afterSecondNight), null);
+    const thirdNight = startNextNight(afterVote2);
+
+    let s2 = submitNightStep(thirdNight, 'p3'); // bodyguard protects Carol again — allowed now
+    s2 = submitNightStep(s2, 'p3'); // werewolf kills Carol
+    const afterThirdNight = resolveNight(s2);
+
+    const carol = afterThirdNight.players.find((p) => p.id === 'p3');
+    expect(carol?.alive).toBe(true);
+    expect(afterThirdNight.deaths).toHaveLength(0);
   });
 });
 

@@ -29,6 +29,8 @@ export interface NightContext {
   eventsSoFar: NightEvent[];
   /** Every event emitted since the game began, across all rounds — for roles with a once-per-game limit (e.g. the Witch's potions). */
   history: NightEvent[];
+  /** Events emitted during the immediately preceding night — for roles that can't repeat last night's choice (e.g. the Bodyguard). Empty on round 1. */
+  previousNightEvents: NightEvent[];
 }
 
 /**
@@ -89,6 +91,8 @@ export interface GameState {
   nightEvents: NightEvent[];
   /** Every night event ever emitted, across all rounds — never cleared. */
   allNightEvents: NightEvent[];
+  /** Events from the immediately preceding night, kept around for one round after nightEvents resets. Empty on round 1. */
+  previousNightEvents: NightEvent[];
   deaths: DeathRecord[];
   log: string[];
   winner: Team | null;
