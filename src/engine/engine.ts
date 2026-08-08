@@ -11,7 +11,6 @@ import type {
 export interface PlayerSetup {
   id: string;
   name: string;
-  roleId: string;
 }
 
 function livingPlayers(players: Player[]): Player[] {
@@ -37,6 +36,43 @@ function computeNightSteps(players: Player[]): NightStep[] {
   return steps;
 }
 
+/**
+ * Round-1 steps for a freshly dealt game: one per acting role in the
+ * composition, in night order, with actingPlayerIds left empty — the
+ * moderator doesn't know who holds them yet, same as in a real game where
+ * only the players themselves have looked at their cards.
+ */
+function computeInitialNightSteps(roleComposition: Record<string, number>): NightStep[] {
+  return Object.entries(roleComposition)
+    .filter(([, count]) => count > 0)
+    .map(([roleId]) => getRole(roleId))
+    .filter((role) => role.nightOrder !== null)
+    .sort((a, b) => (a.nightOrder as number) - (b.nightOrder as number))
+    .map((role): NightStep => ({ roleId: role.id, actingPlayerIds: [] }));
+}
+
+/**
+ * Assigns every still-unidentified player to one of the composition's
+ * no-night-action roles (e.g. villager). Only safe to call once every
+ * acting role due this round has already been identified — otherwise some
+ * of these players could still turn out to hold one of those instead.
+ */
+function fillRemainingPassiveRoles(players: Player[], roleComposition: Record<string, number>): Player[] {
+  const assignedCounts: Record<string, number> = {};
+  for (const p of players) {
+    if (p.roleId) assignedCounts[p.roleId] = (assignedCounts[p.roleId] ?? 0) + 1;
+  }
+
+  const remainingSlots: string[] = [];
+  for (const [roleId, count] of Object.entries(roleComposition)) {
+    const remaining = count - (assignedCounts[roleId] ?? 0);
+    for (let i = 0; i < remaining; i++) remainingSlots.push(roleId);
+  }
+
+  let i = 0;
+  return players.map((p) => (p.roleId ? p : { ...p, roleId: remainingSlots[i++] }));
+}
+
 export function checkWinCondition(players: Player[]): Team | null {
   const alive = livingPlayers(players);
   const werewolves = alive.filter((p) => getRole(p.roleId).team === 'werewolves');
@@ -47,11 +83,17 @@ export function checkWinCondition(players: Player[]): Team | null {
   return null;
 }
 
-export function createGame(setup: PlayerSetup[]): GameState {
+/**
+ * Deals the players into a game without telling the moderator who holds
+ * which role — same as shuffling a physical deck and handing it out: every
+ * player knows their own card, but the moderator only finds out during
+ * round 1, one role at a time, via identifyNightRoleHolders.
+ */
+export function createGame(setup: PlayerSetup[], roleComposition: Record<string, number>): GameState {
   const players: Player[] = setup.map((p) => ({
     id: p.id,
     name: p.name,
-    roleId: p.roleId,
+    roleId: '',
     alive: true,
   }));
 
@@ -59,7 +101,8 @@ export function createGame(setup: PlayerSetup[]): GameState {
     phase: 'night',
     round: 1,
     players,
-    pendingNightSteps: computeNightSteps(players),
+    roleComposition,
+    pendingNightSteps: computeInitialNightSteps(roleComposition),
     nightEvents: [],
     deaths: [],
     log: [`Round 1 begins. Night falls on the village.`],
@@ -69,6 +112,47 @@ export function createGame(setup: PlayerSetup[]): GameState {
 
 export function getCurrentNightStep(state: GameState): NightStep | null {
   return state.pendingNightSteps[0] ?? null;
+}
+
+/** True while the current step's role hasn't been identified yet (round 1 only). */
+export function needsIdentification(state: GameState): boolean {
+  const step = getCurrentNightStep(state);
+  return step !== null && step.actingPlayerIds.length === 0;
+}
+
+/**
+ * Records which living, not-yet-identified players actually hold the
+ * current step's role — the moment the moderator learns it by calling the
+ * role (e.g. "werewolves, open your eyes"). Once every acting role due this
+ * round has been identified this way, anyone left over is assigned to the
+ * composition's remaining no-night-action roles, since by then nobody could
+ * still turn out to hold one of the acting roles instead.
+ */
+export function identifyNightRoleHolders(state: GameState, playerIds: string[]): GameState {
+  const step = getCurrentNightStep(state);
+  if (!step) throw new Error('No pending night step to identify');
+  if (step.actingPlayerIds.length > 0) throw new Error('This step is already identified');
+
+  const expected = state.roleComposition[step.roleId] ?? 0;
+  if (playerIds.length !== expected) {
+    throw new Error(`Expected ${expected} player(s) for ${step.roleId}, got ${playerIds.length}`);
+  }
+
+  let players = state.players.map((p) =>
+    playerIds.includes(p.id) ? { ...p, roleId: step.roleId } : p,
+  );
+
+  const isLastPendingStep = state.pendingNightSteps.length === 1;
+  if (isLastPendingStep) {
+    players = fillRemainingPassiveRoles(players, state.roleComposition);
+  }
+
+  const pendingNightSteps = [
+    { ...step, actingPlayerIds: playerIds },
+    ...state.pendingNightSteps.slice(1),
+  ];
+
+  return { ...state, players, pendingNightSteps };
 }
 
 /**

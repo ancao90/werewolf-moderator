@@ -5,6 +5,7 @@ export type Phase = 'setup' | 'night' | 'day' | 'voting' | 'resolution' | 'gameo
 export interface Player {
   id: string;
   name: string;
+  /** '' means not yet identified — dealt a card, but the moderator doesn't know which one yet. */
   roleId: string;
   alive: boolean;
 }
@@ -71,6 +72,8 @@ export interface GameState {
   phase: Phase;
   round: number;
   players: Player[];
+  /** The deck this game was dealt from, e.g. { werewolf: 2, seer: 1, villager: 3 }. */
+  roleComposition: Record<string, number>;
   /** Night steps still to be collected this round, in order. */
   pendingNightSteps: NightStep[];
   /** Events collected so far during the current night. */

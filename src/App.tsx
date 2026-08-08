@@ -2,6 +2,7 @@ import { useState } from 'react';
 import {
   createGame,
   getCurrentNightStep,
+  identifyNightRoleHolders,
   resolveNight,
   resolveVote,
   startNextNight,
@@ -29,11 +30,19 @@ function App() {
     setState(next);
   }
 
+  function handleIdentify(playerIds: string[]) {
+    setState(identifyNightRoleHolders(state!, playerIds));
+  }
+
   if (!state) {
     return (
       <>
         <Backdrop phase="setup" />
-        <SetupScreen onStart={(setup: PlayerSetup[]) => setState(createGame(setup))} />
+        <SetupScreen
+          onStart={(setup: PlayerSetup[], roleComposition: Record<string, number>) =>
+            setState(createGame(setup, roleComposition))
+          }
+        />
       </>
     );
   }
@@ -44,7 +53,7 @@ function App() {
       {(() => {
         switch (state.phase) {
           case 'night':
-            return <NightScreen state={state} onSubmit={handleNightSubmit} />;
+            return <NightScreen state={state} onSubmit={handleNightSubmit} onIdentify={handleIdentify} />;
           case 'day':
             return <DayScreen state={state} onStartVote={() => setState(startVoting(state))} />;
           case 'voting':

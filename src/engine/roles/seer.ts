@@ -12,7 +12,7 @@ export const seer: RoleDefinition = {
   resolveNightAction: (ctx, targetId) => {
     if (!targetId) return [];
     const target = ctx.players.find((p) => p.id === targetId);
-    if (!target) return [];
+    if (!target || !target.roleId) return [];
     const team = getRole(target.roleId).team;
     return [{ type: 'reveal', sourceRoleId: 'seer', targetId, info: team }];
   },
