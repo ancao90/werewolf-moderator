@@ -1,7 +1,9 @@
 import type { GameState, Team } from './engine/types';
 
-const HISTORY_KEY = 'werewolf_history';
-const MAX_ENTRIES = 200;
+const SESSIONS_KEY = 'werewolf_sessions';
+const LEGACY_HISTORY_KEY = 'werewolf_history';
+const MAX_SESSIONS = 50;
+const MAX_GAMES_PER_SESSION = 200;
 
 export interface GameResultPlayer {
   name: string;
@@ -16,10 +18,42 @@ export interface GameResult {
   players: GameResultPlayer[];
 }
 
-export function loadHistory(): GameResult[] {
+export interface GameSession {
+  id: string;
+  createdAt: string;
+  /** Newest first. */
+  games: GameResult[];
+}
+
+function migrateLegacyHistory(): GameSession[] {
   try {
-    const raw = localStorage.getItem(HISTORY_KEY);
+    const raw = localStorage.getItem(LEGACY_HISTORY_KEY);
     if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed) || parsed.length === 0) return [];
+    const games = parsed as GameResult[];
+    const session: GameSession = {
+      id: crypto.randomUUID(),
+      createdAt: games[games.length - 1].date,
+      games,
+    };
+    localStorage.setItem(SESSIONS_KEY, JSON.stringify([session]));
+    localStorage.removeItem(LEGACY_HISTORY_KEY);
+    return [session];
+  } catch {
+    return [];
+  }
+}
+
+function saveSessions(sessions: GameSession[]): void {
+  localStorage.setItem(SESSIONS_KEY, JSON.stringify(sessions.slice(0, MAX_SESSIONS)));
+}
+
+/** All sessions, newest-created first. */
+export function loadSessions(): GameSession[] {
+  try {
+    const raw = localStorage.getItem(SESSIONS_KEY);
+    if (!raw) return migrateLegacyHistory();
     const parsed = JSON.parse(raw);
     return Array.isArray(parsed) ? parsed : [];
   } catch {
@@ -27,8 +61,23 @@ export function loadHistory(): GameResult[] {
   }
 }
 
-/** Appends a finished game's outcome to history. Call once, right when a game reaches 'gameover'. */
-export function recordGameResult(state: GameState): void {
+export function getSession(id: string): GameSession | null {
+  return loadSessions().find((s) => s.id === id) ?? null;
+}
+
+/** Creates a new, empty session and persists it. Players must join a session before they can play. */
+export function createSession(): GameSession {
+  const session: GameSession = {
+    id: crypto.randomUUID(),
+    createdAt: new Date().toISOString(),
+    games: [],
+  };
+  saveSessions([session, ...loadSessions()]);
+  return session;
+}
+
+/** Appends a finished game's outcome to the given session. Call once, right when a game reaches 'gameover'. */
+export function recordGameResult(sessionId: string, state: GameState): void {
   const result: GameResult = {
     date: new Date().toISOString(),
     rounds: state.round,
@@ -36,6 +85,9 @@ export function recordGameResult(state: GameState): void {
     players: state.players.map((p) => ({ name: p.name, roleId: p.roleId, alive: p.alive })),
   };
 
-  const history = [result, ...loadHistory()].slice(0, MAX_ENTRIES);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(history));
+  const sessions = loadSessions();
+  const session = sessions.find((s) => s.id === sessionId);
+  if (!session) return;
+  session.games = [result, ...session.games].slice(0, MAX_GAMES_PER_SESSION);
+  saveSessions(sessions);
 }

@@ -17,11 +17,13 @@ import { DayScreen } from './components/DayScreen';
 import { VotingScreen } from './components/VotingScreen';
 import { ResolutionScreen } from './components/ResolutionScreen';
 import { GameOverScreen } from './components/GameOverScreen';
-import { HistoryScreen } from './components/HistoryScreen';
+import { HomeScreen } from './components/HomeScreen';
+import { SessionScreen } from './components/SessionScreen';
 import { Backdrop, getPhaseTheme } from './components/Backdrop';
-import { loadHistory, recordGameResult } from './history';
+import { createSession, getSession, loadSessions, recordGameResult } from './history';
 
 const GAME_KEY = 'werewolf_game';
+const SESSION_ID_KEY = 'werewolf_current_session_id';
 
 function loadGame(): GameState | null {
   try {
@@ -45,7 +47,10 @@ function loadGame(): GameState | null {
 
 function App() {
   const [state, setState] = useState<GameState | null>(loadGame);
-  const [view, setView] = useState<'setup' | 'history'>('setup');
+  const [sessionId, setSessionId] = useState<string | null>(() =>
+    localStorage.getItem(SESSION_ID_KEY),
+  );
+  const [subView, setSubView] = useState<'sessionDetail' | 'setup'>('sessionDetail');
 
   useEffect(() => {
     if (state) localStorage.setItem(GAME_KEY, JSON.stringify(state));
@@ -53,16 +58,27 @@ function App() {
   }, [state]);
 
   useEffect(() => {
+    if (sessionId) localStorage.setItem(SESSION_ID_KEY, sessionId);
+    else localStorage.removeItem(SESSION_ID_KEY);
+  }, [sessionId]);
+
+  useEffect(() => {
     const theme = getPhaseTheme(state?.phase ?? 'setup');
     if (theme) document.documentElement.dataset.phase = theme;
     else delete document.documentElement.dataset.phase;
   }, [state?.phase]);
 
+  const session = sessionId ? getSession(sessionId) : null;
+
+  useEffect(() => {
+    if (sessionId && !session) setSessionId(null);
+  }, [sessionId, session]);
+
   function handleNightSubmit(targetId: string | null) {
     let next = submitNightStep(state!, targetId);
     if (getCurrentNightStep(next) === null) {
       next = resolveNight(next);
-      if (next.phase === 'gameover') recordGameResult(next);
+      if (next.phase === 'gameover') recordGameResult(sessionId!, next);
     }
     setState(next);
   }
@@ -71,18 +87,49 @@ function App() {
     setState(identifyNightRoleHolders(state!, playerIds));
   }
 
+  function handleCreateSession() {
+    const session = createSession();
+    setSessionId(session.id);
+    setSubView('setup');
+  }
+
+  function handleSelectSession(id: string) {
+    setSessionId(id);
+    setSubView('sessionDetail');
+  }
+
+  if (!sessionId) {
+    return (
+      <>
+        <Backdrop phase="setup" />
+        <HomeScreen
+          sessions={loadSessions()}
+          onCreateSession={handleCreateSession}
+          onSelectSession={handleSelectSession}
+        />
+      </>
+    );
+  }
+
+  if (!session) return null;
+
   if (!state) {
     return (
       <>
         <Backdrop phase="setup" />
-        {view === 'history' ? (
-          <HistoryScreen history={loadHistory()} onBack={() => setView('setup')} />
+        {subView === 'sessionDetail' ? (
+          <SessionScreen
+            session={session}
+            onStartGame={() => setSubView('setup')}
+            onBack={() => setSessionId(null)}
+          />
         ) : (
           <SetupScreen
+            session={session}
             onStart={(setup: PlayerSetup[], roleComposition: Record<string, number>) =>
               setState(createGame(setup, roleComposition))
             }
-            onViewHistory={() => setView('history')}
+            onBack={() => setSubView('sessionDetail')}
           />
         )}
       </>
@@ -104,7 +151,7 @@ function App() {
                 state={state}
                 onResolve={(eliminatedId) => {
                   const next = resolveVote(state, eliminatedId);
-                  if (next.phase === 'gameover') recordGameResult(next);
+                  if (next.phase === 'gameover') recordGameResult(sessionId, next);
                   setState(next);
                 }}
               />
@@ -112,7 +159,15 @@ function App() {
           case 'resolution':
             return <ResolutionScreen state={state} onStartNight={() => setState(startNextNight(state))} />;
           case 'gameover':
-            return <GameOverScreen state={state} onNewGame={() => setState(null)} />;
+            return (
+              <GameOverScreen
+                state={state}
+                onNewGame={() => {
+                  setState(null);
+                  setSubView('setup');
+                }}
+              />
+            );
           default:
             return null;
         }

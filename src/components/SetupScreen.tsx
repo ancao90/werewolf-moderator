@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { ROLE_REGISTRY } from '../engine/roles';
 import type { PlayerSetup } from '../engine/engine';
+import type { GameSession } from '../history';
+import { formatDateTime } from '../format';
 
 interface DraftPlayer {
   id: string;
@@ -29,11 +31,13 @@ function makeInitialPlayers(): DraftPlayer[] {
 }
 
 export function SetupScreen({
+  session,
   onStart,
-  onViewHistory,
+  onBack,
 }: {
+  session: GameSession;
   onStart: (setup: PlayerSetup[], roleComposition: Record<string, number>) => void;
-  onViewHistory: () => void;
+  onBack: () => void;
 }) {
   const [players, setPlayers] = useState<DraftPlayer[]>(makeInitialPlayers);
 
@@ -94,6 +98,12 @@ export function SetupScreen({
           Thêm từng người chơi, sau đó chọn bộ vai trò. Hãy xáo và chia bộ bài này cho người chơi
           trước khi bắt đầu — trong đêm đầu tiên, bạn sẽ ghi lại ai nắm vai trò nào khi gọi họ dậy.
         </p>
+      </div>
+
+      <div className="row" style={{ gap: 8 }}>
+        <button type="button" className="btn-ghost" onClick={onBack}>
+          ← Phiên lúc {formatDateTime(session.createdAt)}
+        </button>
       </div>
 
       <div className="card">
@@ -172,10 +182,6 @@ export function SetupScreen({
         onClick={handleStart}
       >
         Bắt Đầu
-      </button>
-
-      <button type="button" className="btn-ghost" onClick={onViewHistory}>
-        📜 Xem lịch sử ván đấu
       </button>
     </div>
   );
