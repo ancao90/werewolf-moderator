@@ -4,10 +4,18 @@ const STAR_POSITIONS = [
   [8, 78], [24, 88], [38, 94], [54, 82], [68, 92], [84, 76], [95, 90],
 ];
 
+export function getPhaseTheme(phase: string): 'night' | 'day' | null {
+  if (phase === 'night' || phase === 'voting' || phase === 'setup') return 'night';
+  if (phase === 'day' || phase === 'resolution') return 'day';
+  return null;
+}
+
 export function Backdrop({ phase }: { phase: string }) {
-  if (phase === 'night' || phase === 'voting' || phase === 'setup') {
+  const theme = getPhaseTheme(phase);
+
+  if (theme === 'night') {
     return (
-      <div className="backdrop" aria-hidden="true">
+      <div className="backdrop backdrop-night" aria-hidden="true">
         <div className="moon" />
         {STAR_POSITIONS.map(([x, y], i) => (
           <span
@@ -24,9 +32,9 @@ export function Backdrop({ phase }: { phase: string }) {
     );
   }
 
-  if (phase === 'day' || phase === 'resolution') {
+  if (theme === 'day') {
     return (
-      <div className="backdrop" aria-hidden="true">
+      <div className="backdrop backdrop-day" aria-hidden="true">
         <div className="sun" />
       </div>
     );

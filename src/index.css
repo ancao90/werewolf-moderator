@@ -46,6 +46,66 @@
   }
 }
 
+/* ---------- in-game day/night theme ---------- */
+/* Overrides the light/dark palette above based on the current game phase
+   (set as data-phase on <html>), so night feels like night and day feels
+   like day regardless of the device's system theme. */
+
+:root[data-phase='night'] {
+  --text: #cfccd8;
+  --text-h: #f4f2fa;
+  --bg: #0c0918;
+  --bg-grad: radial-gradient(ellipse at top, #1f1638 0%, #0a0714 60%);
+  --card-bg: rgba(26, 21, 42, 0.78);
+  --card-border: rgba(167, 139, 250, 0.22);
+  --border: #2a2438;
+  --accent: #8b6ef2;
+  --accent-2: #d24fe0;
+  --accent-text: #fff;
+  --muted: #9992a8;
+  --gold: #e2b04a;
+}
+
+:root[data-phase='day'] {
+  --text: #4a4030;
+  --text-h: #2b2313;
+  --bg: #fff8e8;
+  --bg-grad: radial-gradient(ellipse at top, #fff0c9 0%, #fff8e8 60%);
+  --card-bg: #fffdf6;
+  --card-border: #f2dfa8;
+  --border: #f0dfae;
+  --accent: #e08b1f;
+  --accent-2: #f0563a;
+  --accent-text: #fff;
+  --muted: #9c8b62;
+  --gold: #c47a12;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root[data-phase='day'] {
+    --text: #e8dfc2;
+    --text-h: #fbf3da;
+    --bg: #241a08;
+    --bg-grad: radial-gradient(ellipse at top, #3d2a0c 0%, #201705 60%);
+    --card-bg: rgba(46, 33, 12, 0.78);
+    --card-border: rgba(240, 190, 90, 0.22);
+    --border: #3a2c12;
+    --accent: #f0a835;
+    --accent-2: #f4623a;
+    --muted: #b8a480;
+  }
+}
+
+body,
+#root {
+  transition: background-color 0.6s ease, color 0.6s ease;
+}
+
+.card,
+.btn {
+  transition: background-color 0.4s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease, color 0.4s ease;
+}
+
 * {
   box-sizing: border-box;
 }
@@ -76,6 +136,14 @@ body {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+}
+
+.backdrop-night {
+  background: radial-gradient(ellipse at top, rgba(139, 110, 242, 0.1) 0%, transparent 55%);
+}
+
+.backdrop-day {
+  background: radial-gradient(ellipse at top, rgba(240, 168, 53, 0.16) 0%, transparent 60%);
 }
 
 .moon {

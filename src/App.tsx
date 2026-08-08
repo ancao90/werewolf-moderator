@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   createGame,
   getCurrentNightStep,
@@ -17,10 +17,16 @@ import { DayScreen } from './components/DayScreen';
 import { VotingScreen } from './components/VotingScreen';
 import { ResolutionScreen } from './components/ResolutionScreen';
 import { GameOverScreen } from './components/GameOverScreen';
-import { Backdrop } from './components/Backdrop';
+import { Backdrop, getPhaseTheme } from './components/Backdrop';
 
 function App() {
   const [state, setState] = useState<GameState | null>(null);
+
+  useEffect(() => {
+    const theme = getPhaseTheme(state?.phase ?? 'setup');
+    if (theme) document.documentElement.dataset.phase = theme;
+    else delete document.documentElement.dataset.phase;
+  }, [state?.phase]);
 
   function handleNightSubmit(targetId: string | null) {
     let next = submitNightStep(state!, targetId);
