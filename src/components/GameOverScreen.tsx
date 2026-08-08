@@ -35,9 +35,11 @@ function Confetti({ winner }: { winner: 'werewolves' | 'villagers' | 'tanner' })
 export function GameOverScreen({
   state,
   onNewGame,
+  onHome,
 }: {
   state: GameState;
   onNewGame: () => void;
+  onHome: () => void;
 }) {
   const winner = state.winner ?? 'villagers';
 
@@ -66,6 +68,9 @@ export function GameOverScreen({
 
       <button type="button" className="btn btn-primary" onClick={onNewGame}>
         Ván Mới
+      </button>
+      <button type="button" className="btn btn-ghost" onClick={onHome}>
+        Về Trang Chủ
       </button>
     </div>
   );

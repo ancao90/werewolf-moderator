@@ -197,6 +197,10 @@ function App() {
                   setState(null);
                   setSubView('setup');
                 }}
+                onHome={() => {
+                  setState(null);
+                  setSessionId(null);
+                }}
               />
             );
           default:
