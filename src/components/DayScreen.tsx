@@ -17,7 +17,7 @@ export function DayScreen({
   return (
     <div>
       <div className="top-bar">
-        <h1>Ngày {state.round}</h1>
+        <h1>☀️ Ngày <span className="round-num">{state.round}</span></h1>
       </div>
 
       <div className="card">

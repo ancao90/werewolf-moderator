@@ -16,13 +16,10 @@ import { DayScreen } from './components/DayScreen';
 import { VotingScreen } from './components/VotingScreen';
 import { ResolutionScreen } from './components/ResolutionScreen';
 import { GameOverScreen } from './components/GameOverScreen';
+import { Backdrop } from './components/Backdrop';
 
 function App() {
   const [state, setState] = useState<GameState | null>(null);
-
-  if (!state) {
-    return <SetupScreen onStart={(setup: PlayerSetup[]) => setState(createGame(setup))} />;
-  }
 
   function handleNightSubmit(targetId: string | null) {
     let next = submitNightStep(state!, targetId);
@@ -32,25 +29,41 @@ function App() {
     setState(next);
   }
 
-  switch (state.phase) {
-    case 'night':
-      return <NightScreen state={state} onSubmit={handleNightSubmit} />;
-    case 'day':
-      return <DayScreen state={state} onStartVote={() => setState(startVoting(state))} />;
-    case 'voting':
-      return (
-        <VotingScreen
-          state={state}
-          onResolve={(eliminatedId) => setState(resolveVote(state, eliminatedId))}
-        />
-      );
-    case 'resolution':
-      return <ResolutionScreen state={state} onStartNight={() => setState(startNextNight(state))} />;
-    case 'gameover':
-      return <GameOverScreen state={state} onNewGame={() => setState(null)} />;
-    default:
-      return null;
+  if (!state) {
+    return (
+      <>
+        <Backdrop phase="setup" />
+        <SetupScreen onStart={(setup: PlayerSetup[]) => setState(createGame(setup))} />
+      </>
+    );
   }
+
+  return (
+    <>
+      <Backdrop phase={state.phase} />
+      {(() => {
+        switch (state.phase) {
+          case 'night':
+            return <NightScreen state={state} onSubmit={handleNightSubmit} />;
+          case 'day':
+            return <DayScreen state={state} onStartVote={() => setState(startVoting(state))} />;
+          case 'voting':
+            return (
+              <VotingScreen
+                state={state}
+                onResolve={(eliminatedId) => setState(resolveVote(state, eliminatedId))}
+              />
+            );
+          case 'resolution':
+            return <ResolutionScreen state={state} onStartNight={() => setState(startNextNight(state))} />;
+          case 'gameover':
+            return <GameOverScreen state={state} onNewGame={() => setState(null)} />;
+          default:
+            return null;
+        }
+      })()}
+    </>
+  );
 }
 
 export default App;

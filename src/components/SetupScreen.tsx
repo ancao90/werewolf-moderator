@@ -41,10 +41,11 @@ export function SetupScreen({ onStart }: { onStart: (setup: PlayerSetup[]) => vo
 
   return (
     <div>
-      <div className="top-bar">
-        <h1>Ván Mới</h1>
+      <div style={{ textAlign: 'center', margin: '8px 0 24px' }}>
+        <span className="hero-emblem" style={{ display: 'inline-block' }}>🐺</span>
+        <h1 className="hero-title">Ma Sói</h1>
+        <p className="muted">Thêm từng người chơi và gán vai trò cho họ.</p>
       </div>
-      <p className="muted">Thêm từng người chơi và gán vai trò cho họ.</p>
 
       <div className="card">
         {players.map((p, i) => (

@@ -27,7 +27,7 @@ export function NightScreen({
   return (
     <div>
       <div className="top-bar">
-        <h1>Đêm {state.round}</h1>
+        <h1>🌙 Đêm <span className="round-num">{state.round}</span></h1>
         <span className="pill">{role.name}</span>
       </div>
 

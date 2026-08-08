@@ -12,7 +12,7 @@ export function VotingScreen({
   return (
     <div>
       <div className="top-bar">
-        <h1>Bỏ Phiếu</h1>
+        <h1>🗳️ Bỏ Phiếu</h1>
       </div>
 
       <div className="card">

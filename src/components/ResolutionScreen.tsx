@@ -14,7 +14,7 @@ export function ResolutionScreen({
   return (
     <div>
       <div className="top-bar">
-        <h1>Kết Quả Bỏ Phiếu</h1>
+        <h1>🌅 Kết Quả Bỏ Phiếu</h1>
       </div>
 
       <div className="card">
