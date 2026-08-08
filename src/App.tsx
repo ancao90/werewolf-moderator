@@ -19,8 +19,35 @@ import { ResolutionScreen } from './components/ResolutionScreen';
 import { GameOverScreen } from './components/GameOverScreen';
 import { Backdrop, getPhaseTheme } from './components/Backdrop';
 
+const GAME_KEY = 'werewolf_game';
+
+function loadGame(): GameState | null {
+  try {
+    const raw = localStorage.getItem(GAME_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const validPhases = ['night', 'day', 'voting', 'resolution', 'gameover'];
+    if (
+      parsed &&
+      typeof parsed === 'object' &&
+      validPhases.includes(parsed.phase) &&
+      Array.isArray(parsed.players)
+    ) {
+      return parsed as GameState;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
 function App() {
-  const [state, setState] = useState<GameState | null>(null);
+  const [state, setState] = useState<GameState | null>(loadGame);
+
+  useEffect(() => {
+    if (state) localStorage.setItem(GAME_KEY, JSON.stringify(state));
+    else localStorage.removeItem(GAME_KEY);
+  }, [state]);
 
   useEffect(() => {
     const theme = getPhaseTheme(state?.phase ?? 'setup');
