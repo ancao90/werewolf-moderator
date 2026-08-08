@@ -106,7 +106,11 @@ export function checkWinCondition(players: Player[], canVillagersStillTurnTheTid
  * player knows their own card, but the moderator only finds out during
  * round 1, one role at a time, via identifyNightRoleHolders.
  */
-export function createGame(setup: PlayerSetup[], roleComposition: Record<string, number>): GameState {
+export function createGame(
+  setup: PlayerSetup[],
+  roleComposition: Record<string, number>,
+  discussionSeconds = 3 * 60,
+): GameState {
   const players: Player[] = setup.map((p) => ({
     id: p.id,
     name: p.name,
@@ -126,6 +130,7 @@ export function createGame(setup: PlayerSetup[], roleComposition: Record<string,
     deaths: [],
     log: [`Round 1 begins. Night falls on the village.`],
     winner: null,
+    discussionSeconds,
   };
 }
 

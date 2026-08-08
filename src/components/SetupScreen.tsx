@@ -30,13 +30,20 @@ function makeInitialPlayers(): DraftPlayer[] {
   return names.map((name) => ({ id: `p${nextId++}`, name }));
 }
 
+const DISCUSSION_MINUTES_KEY = 'werewolf_discussion_minutes';
+
+function loadDiscussionMinutes(): number {
+  const raw = Number(localStorage.getItem(DISCUSSION_MINUTES_KEY));
+  return Number.isFinite(raw) && raw > 0 ? raw : 3;
+}
+
 export function SetupScreen({
   session,
   onStart,
   onBack,
 }: {
   session: GameSession;
-  onStart: (setup: PlayerSetup[], roleComposition: Record<string, number>) => void;
+  onStart: (setup: PlayerSetup[], roleComposition: Record<string, number>, discussionSeconds: number) => void;
   onBack: () => void;
 }) {
   const [players, setPlayers] = useState<DraftPlayer[]>(makeInitialPlayers);
@@ -46,6 +53,12 @@ export function SetupScreen({
     villager: 2,
     seer: 1,
   });
+
+  const [discussionMinutes, setDiscussionMinutes] = useState<number>(loadDiscussionMinutes);
+
+  useEffect(() => {
+    localStorage.setItem(DISCUSSION_MINUTES_KEY, String(discussionMinutes));
+  }, [discussionMinutes]);
 
   useEffect(() => {
     const names = players.map((p) => p.name);
@@ -86,7 +99,7 @@ export function SetupScreen({
 
   function handleStart() {
     const setup: PlayerSetup[] = players.map((p) => ({ id: p.id, name: p.name.trim() }));
-    onStart(setup, counts);
+    onStart(setup, counts, discussionMinutes * 60);
   }
 
   return (
@@ -165,6 +178,30 @@ export function SetupScreen({
             </button>
           </div>
         ))}
+      </div>
+
+      <div className="card">
+        <h2>Thời gian thảo luận</h2>
+        <div className="row" style={{ gap: 8 }}>
+          <span style={{ flex: 1 }}>⏱️ Mỗi ngày</span>
+          <button
+            type="button"
+            className="btn-ghost"
+            aria-label="Giảm thời gian thảo luận"
+            onClick={() => setDiscussionMinutes((m) => Math.max(1, m - 1))}
+          >
+            −
+          </button>
+          <span style={{ width: 56, textAlign: 'center' }}>{discussionMinutes} phút</span>
+          <button
+            type="button"
+            className="btn-ghost"
+            aria-label="Tăng thời gian thảo luận"
+            onClick={() => setDiscussionMinutes((m) => m + 1)}
+          >
+            +
+          </button>
+        </div>
       </div>
 
       {werewolfCount === 0 && (

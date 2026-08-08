@@ -104,4 +104,6 @@ export interface GameState {
   deaths: DeathRecord[];
   log: string[];
   winner: Team | null;
+  /** Discussion timer duration for the Day phase, in seconds. */
+  discussionSeconds: number;
 }

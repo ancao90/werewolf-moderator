@@ -126,9 +126,11 @@ function App() {
         ) : (
           <SetupScreen
             session={session}
-            onStart={(setup: PlayerSetup[], roleComposition: Record<string, number>) =>
-              setState(createGame(setup, roleComposition))
-            }
+            onStart={(
+              setup: PlayerSetup[],
+              roleComposition: Record<string, number>,
+              discussionSeconds: number,
+            ) => setState(createGame(setup, roleComposition, discussionSeconds))}
             onBack={() => setSubView('sessionDetail')}
           />
         )}

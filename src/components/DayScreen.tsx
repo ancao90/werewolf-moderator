@@ -2,16 +2,14 @@ import { useEffect, useState } from 'react';
 import { getRole } from '../engine/roles';
 import type { GameState } from '../engine/types';
 
-const DISCUSSION_SECONDS = 3 * 60;
-
-function DiscussionTimer({ round }: { round: number }) {
-  const [secondsLeft, setSecondsLeft] = useState(DISCUSSION_SECONDS);
+function DiscussionTimer({ round, durationSeconds }: { round: number; durationSeconds: number }) {
+  const [secondsLeft, setSecondsLeft] = useState(durationSeconds);
   const [running, setRunning] = useState(true);
 
   useEffect(() => {
-    setSecondsLeft(DISCUSSION_SECONDS);
+    setSecondsLeft(durationSeconds);
     setRunning(true);
-  }, [round]);
+  }, [round, durationSeconds]);
 
   useEffect(() => {
     if (!running || secondsLeft <= 0) return;
@@ -23,7 +21,7 @@ function DiscussionTimer({ round }: { round: number }) {
 
   const minutes = Math.floor(secondsLeft / 60);
   const seconds = secondsLeft % 60;
-  const pct = (secondsLeft / DISCUSSION_SECONDS) * 100;
+  const pct = (secondsLeft / durationSeconds) * 100;
   const timeUp = secondsLeft === 0;
 
   if (timeUp) {
@@ -75,7 +73,7 @@ function DiscussionTimer({ round }: { round: number }) {
           className="btn"
           style={{ flex: 1 }}
           onClick={() => {
-            setSecondsLeft(DISCUSSION_SECONDS);
+            setSecondsLeft(durationSeconds);
             setRunning(true);
           }}
         >
@@ -114,7 +112,7 @@ export function DayScreen({
         )}
       </div>
 
-      <DiscussionTimer round={state.round} />
+      <DiscussionTimer round={state.round} durationSeconds={state.discussionSeconds ?? 3 * 60} />
 
       <h2 style={{ marginTop: 16 }}>Người chơi</h2>
       <div className="card">
