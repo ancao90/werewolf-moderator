@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { getRole } from '../engine/roles';
+import { WITCH_HEAL, WITCH_POISON_PREFIX, witchHealUsed, witchPoisonUsed } from '../engine/roles/witch';
 import { getCurrentNightStep, needsIdentification } from '../engine/engine';
 import type { GameState } from '../engine/types';
 
@@ -15,6 +16,8 @@ export function NightScreen({
   const step = getCurrentNightStep(state);
   const stepKey = step ? `${state.round}-${step.roleId}` : null;
   const [selected, setSelected] = useState<string[]>([]);
+  const [witchHeal, setWitchHeal] = useState(false);
+  const [witchPoisonTarget, setWitchPoisonTarget] = useState<string | null>(null);
 
   if (!step) return null;
 
@@ -100,6 +103,79 @@ export function NightScreen({
     );
   }
 
+  if (role.id === 'witch') {
+    const victimId = state.nightEvents.find((e) => e.type === 'kill')?.targetId;
+    const victim = victimId ? state.players.find((p) => p.id === victimId) : undefined;
+    const healPotionUsed = witchHealUsed(state.allNightEvents);
+    const poisonPotionUsed = witchPoisonUsed(state.allNightEvents);
+    const healAvailable = !!victim && !healPotionUsed;
+    const poisonAvailable = !poisonPotionUsed;
+    const livingPlayers = state.players.filter((p) => p.alive);
+
+    function submitWitch() {
+      const parts: string[] = [];
+      if (witchHeal) parts.push(WITCH_HEAL);
+      if (witchPoisonTarget) parts.push(`${WITCH_POISON_PREFIX}${witchPoisonTarget}`);
+      onSubmit(parts.length > 0 ? parts.join('|') : null);
+      setWitchHeal(false);
+      setWitchPoisonTarget(null);
+    }
+
+    return (
+      <div key={stepKey}>
+        <div className="top-bar">
+          <h1>🌙 Đêm <span className="round-num">{state.round}</span></h1>
+          <span className="role-badge role-badge-center">
+            <span className="role-badge-icon">{role.icon}</span>
+            <span className="role-badge-name">{role.name}</span>
+          </span>
+        </div>
+
+        <div className="card">
+          <h2>{role.name}</h2>
+          <p className="muted">
+            {victim ? `${victim.name} vừa bị Ma Sói cắn.` : 'Đêm nay không ai bị Ma Sói cắn.'}
+          </p>
+          <p className="muted">🧪 Thuốc cứu: {healPotionUsed ? 'đã dùng' : 'còn 1 lần'}</p>
+          <p className="muted">☠️ Thuốc độc: {poisonPotionUsed ? 'đã dùng' : 'còn 1 lần'}</p>
+        </div>
+
+        {healAvailable && (
+          <button
+            type="button"
+            className={`btn ${witchHeal ? 'selected' : ''}`}
+            onClick={() => setWitchHeal((v) => !v)}
+          >
+            Cứu {victim!.name}
+          </button>
+        )}
+
+        {poisonAvailable && (
+          <>
+            <p className="muted">Đầu độc ai đó?</p>
+            {livingPlayers.map((p) => (
+              <button
+                key={p.id}
+                type="button"
+                className={`btn ${witchPoisonTarget === p.id ? 'selected' : ''}`}
+                onClick={() => setWitchPoisonTarget((t) => (t === p.id ? null : p.id))}
+              >
+                {p.name}
+                {state.round > 1 && p.roleId && (
+                  <span className="muted"> — {getRole(p.roleId).icon} {getRole(p.roleId).name}</span>
+                )}
+              </button>
+            ))}
+          </>
+        )}
+
+        <button type="button" className="btn btn-primary" onClick={submitWitch}>
+          Xác Nhận
+        </button>
+      </div>
+    );
+  }
+
   const actingNames = step.actingPlayerIds
     .map((id) => state.players.find((p) => p.id === id)?.name)
     .filter(Boolean)
@@ -109,6 +185,7 @@ export function NightScreen({
     round: state.round,
     players: state.players,
     eventsSoFar: state.nightEvents,
+    history: state.allNightEvents,
   });
 
   return (

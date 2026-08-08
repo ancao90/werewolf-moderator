@@ -10,6 +10,7 @@ import {
   startVoting,
   submitNightStep,
 } from '../engine';
+import { WITCH_HEAL, WITCH_POISON_PREFIX } from '../roles/witch';
 import type { GameState } from '../types';
 
 /**
@@ -35,6 +36,22 @@ function setupFive(): GameState {
       { id: 'p6', name: 'Frank' },
     ],
     { werewolf: 2, seer: 1, villager: 3 },
+  );
+}
+
+// 2 werewolves, 1 witch, 1 seer, vs. 3 plain villagers.
+function setupWithWitch(): GameState {
+  return createGame(
+    [
+      { id: 'p1', name: 'Alice' },
+      { id: 'p2', name: 'Bob' },
+      { id: 'p3', name: 'Carol' },
+      { id: 'p4', name: 'Dave' },
+      { id: 'p5', name: 'Eve' },
+      { id: 'p6', name: 'Frank' },
+      { id: 'p7', name: 'Grace' },
+    ],
+    { werewolf: 2, witch: 1, seer: 1, villager: 3 },
   );
 }
 
@@ -190,6 +207,73 @@ describe('day vote', () => {
     // Roles are already known by round 2, so steps come pre-identified — no re-identification needed.
     expect(nextNight.pendingNightSteps.map((st) => st.roleId)).toEqual(['werewolf', 'seer']);
     expect(nextNight.pendingNightSteps[0].actingPlayerIds.sort()).toEqual(['p1', 'p2']);
+  });
+});
+
+describe('witch', () => {
+  it('heals the werewolves\' victim', () => {
+    const state = setupWithWitch();
+    const afterNight = runNight(state, [
+      { identify: ['p1', 'p2'], target: 'p4' },
+      { identify: ['p3'], target: WITCH_HEAL },
+      { identify: ['p5'], target: null },
+    ]);
+
+    const dave = afterNight.players.find((p) => p.id === 'p4');
+    expect(dave?.alive).toBe(true);
+    expect(afterNight.deaths).toHaveLength(0);
+  });
+
+  it('poisons a chosen target in addition to the werewolves\' kill', () => {
+    const state = setupWithWitch();
+    const afterNight = runNight(state, [
+      { identify: ['p1', 'p2'], target: null },
+      { identify: ['p3'], target: `${WITCH_POISON_PREFIX}p6` },
+      { identify: ['p5'], target: null },
+    ]);
+
+    const frank = afterNight.players.find((p) => p.id === 'p6');
+    expect(frank?.alive).toBe(false);
+    expect(afterNight.deaths).toEqual([{ playerId: 'p6', round: 1, cause: 'night' }]);
+  });
+
+  it('can heal and poison in the same night', () => {
+    const state = setupWithWitch();
+    const afterNight = runNight(state, [
+      { identify: ['p1', 'p2'], target: 'p4' },
+      { identify: ['p3'], target: `${WITCH_HEAL}|${WITCH_POISON_PREFIX}p6` },
+      { identify: ['p5'], target: null },
+    ]);
+
+    const dave = afterNight.players.find((p) => p.id === 'p4');
+    const frank = afterNight.players.find((p) => p.id === 'p6');
+    expect(dave?.alive).toBe(true);
+    expect(frank?.alive).toBe(false);
+    expect(afterNight.deaths).toEqual([{ playerId: 'p6', round: 1, cause: 'night' }]);
+  });
+
+  it('only lets each potion be used once across the whole game', () => {
+    const state = setupWithWitch();
+    const afterFirstNight = runNight(state, [
+      { identify: ['p1', 'p2'], target: 'p4' },
+      { identify: ['p3'], target: WITCH_HEAL },
+      { identify: ['p5'], target: null },
+    ]);
+
+    const voting = startVoting(afterFirstNight);
+    const resolved = resolveVote(voting, null);
+    const secondNight = startNextNight(resolved);
+
+    // Round 2+: every role's holders are already known, so steps arrive
+    // pre-identified — no identifyNightRoleHolders calls needed.
+    let s = submitNightStep(secondNight, 'p5'); // werewolves kill Eve
+    s = submitNightStep(s, WITCH_HEAL); // witch tries to heal again — potion already spent
+    s = submitNightStep(s, null); // seer
+    const afterSecondNight = resolveNight(s);
+
+    const eve = afterSecondNight.players.find((p) => p.id === 'p5');
+    expect(eve?.alive).toBe(false);
+    expect(afterSecondNight.deaths).toEqual([{ playerId: 'p5', round: 2, cause: 'night' }]);
   });
 });
 

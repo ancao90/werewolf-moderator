@@ -27,6 +27,8 @@ export interface NightContext {
   players: Player[];
   /** Events already emitted earlier this same night, in nightOrder. */
   eventsSoFar: NightEvent[];
+  /** Every event emitted since the game began, across all rounds — for roles with a once-per-game limit (e.g. the Witch's potions). */
+  history: NightEvent[];
 }
 
 /**
@@ -85,6 +87,8 @@ export interface GameState {
   pendingNightSteps: NightStep[];
   /** Events collected so far during the current night. */
   nightEvents: NightEvent[];
+  /** Every night event ever emitted, across all rounds — never cleared. */
+  allNightEvents: NightEvent[];
   deaths: DeathRecord[];
   log: string[];
   winner: Team | null;
