@@ -11,7 +11,6 @@ export function VotingScreen({
 }) {
   const livingPlayers = state.players.filter((p) => p.alive);
   const [selected, setSelected] = useState<string | null>(null);
-  const [tie, setTie] = useState(false);
 
   return (
     <div>
@@ -26,10 +25,7 @@ export function VotingScreen({
           key={p.id}
           type="button"
           className={`btn ${selected === p.id ? 'selected' : ''}`}
-          onClick={() => {
-            setSelected((s) => (s === p.id ? null : p.id));
-            setTie(false);
-          }}
+          onClick={() => setSelected((s) => (s === p.id ? null : p.id))}
         >
           {p.name}
           {p.roleId && <span className="muted"> — {getRole(p.roleId).icon} {getRole(p.roleId).name}</span>}
@@ -39,20 +35,13 @@ export function VotingScreen({
       <button
         type="button"
         className="btn btn-primary"
-        disabled={!selected && !tie}
+        disabled={!selected}
         onClick={() => onResolve(selected)}
       >
         Xác Nhận
       </button>
 
-      <button
-        type="button"
-        className={`btn btn-ghost ${tie ? 'selected' : ''}`}
-        onClick={() => {
-          setTie((t) => !t);
-          setSelected(null);
-        }}
-      >
+      <button type="button" className="btn btn-ghost" onClick={() => onResolve(null)}>
         Không loại ai (hòa phiếu)
       </button>
     </div>
