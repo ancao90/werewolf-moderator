@@ -1,5 +1,90 @@
+import { useEffect, useState } from 'react';
 import { getRole } from '../engine/roles';
 import type { GameState } from '../engine/types';
+
+const DISCUSSION_SECONDS = 3 * 60;
+
+function DiscussionTimer({ round }: { round: number }) {
+  const [secondsLeft, setSecondsLeft] = useState(DISCUSSION_SECONDS);
+  const [running, setRunning] = useState(true);
+
+  useEffect(() => {
+    setSecondsLeft(DISCUSSION_SECONDS);
+    setRunning(true);
+  }, [round]);
+
+  useEffect(() => {
+    if (!running || secondsLeft <= 0) return;
+    const id = setInterval(() => {
+      setSecondsLeft((s) => Math.max(0, s - 1));
+    }, 1000);
+    return () => clearInterval(id);
+  }, [running, secondsLeft]);
+
+  const minutes = Math.floor(secondsLeft / 60);
+  const seconds = secondsLeft % 60;
+  const pct = (secondsLeft / DISCUSSION_SECONDS) * 100;
+  const timeUp = secondsLeft === 0;
+
+  if (timeUp) {
+    return (
+      <div className="card">
+        <div className="timer-warning timer-warning-lg">
+          ⚠️ Đã hết thời gian thảo luận
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="card">
+      <div className="row" style={{ borderBottom: 'none', padding: '0 0 10px' }}>
+        <span>⏱️ Thời gian thảo luận</span>
+        <span className="pill">
+          {minutes}:{String(seconds).padStart(2, '0')}
+        </span>
+      </div>
+      <div
+        style={{
+          height: 8,
+          borderRadius: 999,
+          background: 'var(--border)',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            height: '100%',
+            width: `${pct}%`,
+            background: 'linear-gradient(135deg, var(--accent), var(--accent-2))',
+            transition: 'width 1s linear',
+          }}
+        />
+      </div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
+        <button
+          type="button"
+          className="btn"
+          style={{ flex: 1 }}
+          onClick={() => setRunning((r) => !r)}
+        >
+          {running ? 'Tạm dừng' : 'Tiếp tục'}
+        </button>
+        <button
+          type="button"
+          className="btn"
+          style={{ flex: 1 }}
+          onClick={() => {
+            setSecondsLeft(DISCUSSION_SECONDS);
+            setRunning(true);
+          }}
+        >
+          Đặt lại
+        </button>
+      </div>
+    </div>
+  );
+}
 
 export function DayScreen({
   state,
@@ -28,6 +113,8 @@ export function DayScreen({
           })
         )}
       </div>
+
+      <DiscussionTimer round={state.round} />
 
       <h2 style={{ marginTop: 16 }}>Người chơi</h2>
       <div className="card">

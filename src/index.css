@@ -404,6 +404,38 @@ button {
   color: var(--muted);
 }
 
+.pill.danger {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.timer-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: var(--danger-bg);
+  color: var(--danger);
+  font-weight: 700;
+  font-size: 14px;
+  animation: pulseWarn 1.6s ease-in-out infinite;
+}
+
+.timer-warning-lg {
+  margin-top: 0;
+  justify-content: center;
+  padding: 22px 12px;
+  border-radius: 12px;
+  font-size: 19px;
+}
+
+@keyframes pulseWarn {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
+
 .role-badge {
   display: flex;
   flex-direction: column;
