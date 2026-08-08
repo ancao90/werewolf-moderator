@@ -1,3 +1,4 @@
+import { getRole } from '../engine/roles';
 import type { GameState } from '../engine/types';
 
 export function ResolutionScreen({
@@ -32,7 +33,12 @@ export function ResolutionScreen({
       <div className="card">
         {state.players.map((p) => (
           <div className="row" key={p.id}>
-            <span>{p.name}</span>
+            <span>
+              {p.name}
+              {p.roleId && (
+                <span className="muted"> — {getRole(p.roleId).icon} {getRole(p.roleId).name}</span>
+              )}
+            </span>
             <span className={`pill ${p.alive ? '' : 'dead'}`}>
               {p.alive ? 'còn sống' : 'đã loại'}
             </span>

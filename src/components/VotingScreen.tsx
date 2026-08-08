@@ -1,3 +1,4 @@
+import { getRole } from '../engine/roles';
 import type { GameState } from '../engine/types';
 
 export function VotingScreen({
@@ -20,6 +21,7 @@ export function VotingScreen({
       {livingPlayers.map((p) => (
         <button key={p.id} type="button" className="btn" onClick={() => onResolve(p.id)}>
           {p.name}
+          {p.roleId && <span className="muted"> — {getRole(p.roleId).icon} {getRole(p.roleId).name}</span>}
         </button>
       ))}
 

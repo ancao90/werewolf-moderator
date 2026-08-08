@@ -104,6 +104,9 @@ export function NightScreen({
       {livingPlayers.map((p) => (
         <button key={p.id} type="button" className="btn" onClick={() => onSubmit(p.id)}>
           {p.name}
+          {state.round > 1 && p.roleId && (
+            <span className="muted"> — {getRole(p.roleId).icon} {getRole(p.roleId).name}</span>
+          )}
         </button>
       ))}
 
